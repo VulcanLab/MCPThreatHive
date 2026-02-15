@@ -1,0 +1,274 @@
+# MCP Threat Templates Configuration
+# =================================
+# All threat templates are defined here - NOT hardcoded in Python
+# 
+# Structure:
+#   templates:
+#     template_id:
+#       name: "Human readable name"
+#       category: STRIDE category (spoofing, tampering, repudiation, info_disclosure, denial_of_service, elevation_of_privilege)
+#       description: "Detailed description"
+#       attack_vector: "How the attack works"
+#       impact: "Potential impact"
+#       risk_score: 1.0-10.0
+#       aatmf_mapping: AATMF v2 references
+#       owasp_mapping: OWASP LLM Top 10 references
+#       mitre_atlas: MITRE ATLAS references
+#       affected_asset_types: List of asset types affected
+#       recommended_controls: List of control types that mitigate this threat
+
+version: "2.0.0"
+last_updated: "2025-11-27"
+
+templates:
+  # ==================== Spoofing Threats ====================
+  
+  mcp_server_spoofing:
+    name: "MCP Server Spoofing"
+    category: "spoofing"
+    description: "Attacker impersonates a legitimate MCP server to intercept client communications and steal credentials or manipulate responses."
+    attack_vector: "Man-in-the-middle attack on MCP server connection, DNS poisoning, or malicious server deployment."
+    impact: "Credential theft, data exfiltration, unauthorized command execution."
+    risk_score: 8.0
+    likelihood: "medium"
+    aatmf_mapping:
+      tactic: "T10"
+      technique: "AT-090"
+    owasp_mapping: ["LLM08"]
+    mitre_atlas: ["AML.T0040"]
+    affected_asset_types: ["mcp_server", "mcp_client"]
+    recommended_controls: ["server_authentication", "tls_encryption", "certificate_pinning"]
+
+  tool_identity_spoofing:
+    name: "Tool Identity Spoofing"
+    category: "spoofing"
+    description: "Malicious tool masquerades as a legitimate tool to gain unauthorized access or execute malicious operations."
+    attack_vector: "Register malicious tool with similar name to legitimate tool, exploit tool discovery mechanisms."
+    impact: "Unauthorized data access, privilege escalation, system compromise."
+    risk_score: 7.5
+    likelihood: "medium"
+    aatmf_mapping:
+      tactic: "T9"
+      technique: "AT-081"
+    owasp_mapping: ["LLM07"]
+    mitre_atlas: ["AML.T0043"]
+    affected_asset_types: ["tool", "mcp_server"]
+    recommended_controls: ["tool_allowlist", "tool_signature_verification"]
+
+  # ==================== Tampering Threats ====================
+
+  tool_response_injection:
+    name: "MCP Tool Response Injection"
+    category: "tampering"
+    description: "Attacker injects malicious content into tool responses to manipulate LLM behavior or execute prompt injection attacks."
+    attack_vector: "Inject instructions via file content, API responses, or database queries that are processed by MCP tools."
+    impact: "LLM instruction override, unauthorized actions, data manipulation."
+    risk_score: 9.0
+    likelihood: "high"
+    aatmf_mapping:
+      tactic: "T1"
+      technique: "AT-002"
+    owasp_mapping: ["LLM01", "LLM05"]
+    mitre_atlas: ["AML.T0051"]
+    affected_asset_types: ["tool", "file_system", "database"]
+    recommended_controls: ["output_validation", "content_sanitization", "response_filtering"]
+
+  context_manipulation:
+    name: "Context Window Manipulation"
+    category: "tampering"
+    description: "Attacker manipulates the context window to override system instructions or inject malicious prompts."
+    attack_vector: "Flood context with crafted content, exploit context summarization, use long conversation attacks."
+    impact: "System prompt bypass, instruction override, security control evasion."
+    risk_score: 8.5
+    likelihood: "high"
+    aatmf_mapping:
+      tactic: "T4"
+      technique: "AT-030"
+    owasp_mapping: ["LLM01"]
+    mitre_atlas: ["AML.T0051"]
+    affected_asset_types: ["llm_provider", "mcp_client"]
+    recommended_controls: ["context_segmentation", "periodic_policy_restatement", "context_monitoring"]
+
+  # ==================== Repudiation Threats ====================
+
+  audit_log_bypass:
+    name: "Audit Log Bypass"
+    category: "repudiation"
+    description: "Attacker performs actions that evade logging mechanisms, making it impossible to trace malicious activity."
+    attack_vector: "Exploit logging gaps, use tools that bypass audit, manipulate log rotation."
+    impact: "Inability to detect attacks, compliance violations, forensic investigation failure."
+    risk_score: 6.5
+    likelihood: "medium"
+    aatmf_mapping:
+      tactic: "T7"
+      technique: "AT-061"
+    owasp_mapping: ["LLM09"]
+    mitre_atlas: ["AML.T0020"]
+    affected_asset_types: ["mcp_server", "tool"]
+    recommended_controls: ["comprehensive_logging", "log_integrity_protection", "centralized_audit"]
+
+  # ==================== Information Disclosure Threats ====================
+
+  api_key_leakage:
+    name: "API Key Leakage via Tool Output"
+    category: "info_disclosure"
+    description: "Sensitive API keys or credentials are exposed through tool outputs, logs, or error messages."
+    attack_vector: "Craft prompts that cause tools to reveal configuration, exploit verbose error handling."
+    impact: "Credential compromise, unauthorized API access, service abuse."
+    risk_score: 9.0
+    likelihood: "medium"
+    aatmf_mapping:
+      tactic: "T7"
+      technique: "AT-060"
+    owasp_mapping: ["LLM06"]
+    mitre_atlas: ["AML.T0024"]
+    affected_asset_types: ["secret_store", "mcp_server", "tool"]
+    recommended_controls: ["secret_redaction", "output_filtering", "secure_credential_storage"]
+
+  path_traversal:
+    name: "FileSystem Path Traversal via MCP Tool"
+    category: "info_disclosure"
+    description: "Attacker exploits file system tools to access files outside allowed directories."
+    attack_vector: "Use ../ sequences, symbolic links, or path manipulation in file tool parameters."
+    impact: "Unauthorized file access, configuration exposure, source code theft."
+    risk_score: 8.5
+    likelihood: "high"
+    aatmf_mapping:
+      tactic: "T9"
+      technique: "AT-081"
+    owasp_mapping: ["LLM06"]
+    mitre_atlas: ["AML.T0024"]
+    affected_asset_types: ["file_system", "tool"]
+    recommended_controls: ["path_whitelist", "sandbox_isolation", "input_validation"]
+
+  context_extraction:
+    name: "System Prompt / Context Extraction"
+    category: "info_disclosure"
+    description: "Attacker extracts system prompts, hidden instructions, or sensitive context from the LLM."
+    attack_vector: "Prompt injection to reveal system instructions, iterative probing, output analysis."
+    impact: "Security control exposure, attack surface mapping, intellectual property theft."
+    risk_score: 7.0
+    likelihood: "medium"
+    aatmf_mapping:
+      tactic: "T7"
+      technique: "AT-060"
+    owasp_mapping: ["LLM06"]
+    mitre_atlas: ["AML.T0024"]
+    affected_asset_types: ["llm_provider", "mcp_client"]
+    recommended_controls: ["prompt_protection", "output_filtering", "context_isolation"]
+
+  # ==================== Denial of Service Threats ====================
+
+  context_flooding:
+    name: "Context Flooding DoS"
+    category: "denial_of_service"
+    description: "Attacker floods the context window to exhaust processing capacity or evict important instructions."
+    attack_vector: "Submit extremely long inputs, recursive tool calls, large file processing."
+    impact: "Service unavailability, system prompt eviction, degraded performance."
+    risk_score: 6.0
+    likelihood: "high"
+    aatmf_mapping:
+      tactic: "T5"
+      technique: "AT-040"
+    owasp_mapping: ["LLM04"]
+    mitre_atlas: ["AML.T0029"]
+    affected_asset_types: ["llm_provider", "mcp_server"]
+    recommended_controls: ["rate_limiting", "input_size_limits", "context_management"]
+
+  tool_resource_exhaustion:
+    name: "Tool Resource Exhaustion"
+    category: "denial_of_service"
+    description: "Attacker triggers resource-intensive tool operations to exhaust system resources."
+    attack_vector: "Request large file operations, trigger infinite loops, spawn excessive processes."
+    impact: "Service unavailability, resource exhaustion, cost overruns."
+    risk_score: 6.5
+    likelihood: "medium"
+    aatmf_mapping:
+      tactic: "T14"
+      technique: "AT-131"
+    owasp_mapping: ["LLM04"]
+    mitre_atlas: ["AML.T0029"]
+    affected_asset_types: ["tool", "mcp_server"]
+    recommended_controls: ["resource_limits", "timeout_enforcement", "quota_management"]
+
+  # ==================== Elevation of Privilege Threats ====================
+
+  prompt_injection:
+    name: "Prompt Injection via MCP Tool"
+    category: "elevation_of_privilege"
+    description: "Attacker injects malicious instructions through tool inputs or outputs to override system controls."
+    attack_vector: "Embed instructions in file content, web pages, database records that are processed by tools."
+    impact: "Security bypass, unauthorized actions, complete system compromise."
+    risk_score: 9.5
+    likelihood: "high"
+    aatmf_mapping:
+      tactic: "T1"
+      technique: "AT-002"
+    owasp_mapping: ["LLM01"]
+    mitre_atlas: ["AML.T0051"]
+    affected_asset_types: ["tool", "file_system", "browser", "database"]
+    recommended_controls: ["input_sanitization", "content_filtering", "instruction_isolation"]
+
+  tool_privilege_escalation:
+    name: "Tool Privilege Escalation"
+    category: "elevation_of_privilege"
+    description: "Attacker exploits tool capabilities to gain unauthorized access to system resources."
+    attack_vector: "Chain multiple tools, exploit tool interactions, abuse implicit permissions."
+    impact: "Unauthorized system access, data breach, lateral movement."
+    risk_score: 8.5
+    likelihood: "medium"
+    aatmf_mapping:
+      tactic: "T11"
+      technique: "AT-100"
+    owasp_mapping: ["LLM07"]
+    mitre_atlas: ["AML.T0043"]
+    affected_asset_types: ["tool", "mcp_server"]
+    recommended_controls: ["least_privilege", "tool_isolation", "capability_restrictions"]
+
+  ssrf_via_browser:
+    name: "SSRF via Browser MCP Tool"
+    category: "elevation_of_privilege"
+    description: "Attacker uses browser tools to access internal resources or perform server-side request forgery."
+    attack_vector: "Craft URLs targeting internal services, exploit URL parsing, bypass URL filtering."
+    impact: "Internal network access, cloud metadata exposure, service abuse."
+    risk_score: 8.0
+    likelihood: "medium"
+    aatmf_mapping:
+      tactic: "T9"
+      technique: "AT-081"
+    owasp_mapping: ["LLM07"]
+    mitre_atlas: ["AML.T0043"]
+    affected_asset_types: ["browser", "tool"]
+    recommended_controls: ["url_whitelist", "network_isolation", "request_validation"]
+
+  agent_delegation_abuse:
+    name: "Multi-Agent Delegation Abuse"
+    category: "elevation_of_privilege"
+    description: "Attacker exploits agent delegation mechanisms to execute unauthorized actions through trusted agents."
+    attack_vector: "Manipulate agent instructions, exploit trust relationships, inject malicious sub-tasks."
+    impact: "Unauthorized actions, security bypass, cascading compromise."
+    risk_score: 8.0
+    likelihood: "medium"
+    aatmf_mapping:
+      tactic: "T11"
+      technique: "AT-102"
+    owasp_mapping: ["LLM07"]
+    mitre_atlas: ["AML.T0043"]
+    affected_asset_types: ["mcp_client", "llm_provider"]
+    recommended_controls: ["delegation_limits", "action_verification", "trust_boundaries"]
+
+# ==================== Risk Score Guidelines ====================
+# 
+# 1.0 - 3.0: Low risk - Minor impact, easily mitigated
+# 3.1 - 5.0: Medium-Low risk - Moderate impact, standard controls sufficient
+# 5.1 - 7.0: Medium risk - Significant impact, requires attention
+# 7.1 - 8.5: High risk - Major impact, priority mitigation required
+# 8.6 - 10.0: Critical risk - Severe impact, immediate action required
+
+# ==================== Likelihood Guidelines ====================
+#
+# low: Requires specialized knowledge/access, rarely observed
+# medium: Feasible with moderate effort, occasionally observed
+# high: Easy to execute, commonly observed in the wild
+
+

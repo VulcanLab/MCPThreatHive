@@ -1,0 +1,39 @@
+# MCP Threat Platform Dependencies
+# ==================================
+
+# Core
+python-dotenv>=1.0.0
+requests>=2.31.0
+aiohttp>=3.9.0              # Async HTTP for intel gathering
+pyyaml>=6.0.0               # YAML configuration
+
+# LLM Support
+litellm>=1.0.0
+openai>=1.0.0
+
+# Intelligence Gathering
+duckduckgo-search==6.4.2
+ddgs
+# Web Framework
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# CLI Tools
+rich>=13.0.0
+
+# Data Processing
+pandas>=2.0.0
+
+# Knowledge Graph (optional - will work without these)
+# kg-gen>=0.1.0           # Knowledge graph generation - install separately if needed
+neo4j        # Neo4j driver - install separately if needed
+
+# Database (Required for persistent storage)
+sqlalchemy>=2.0.0       # ORM - required for data persistence
+
+# Optional: PostgreSQL support (for production)
+# psycopg2-binary>=2.9.0  # PostgreSQL driver - uncomment for production
+
+# Optional: PDF Generation
+# weasyprint>=60.0        # HTML to PDF
+# reportlab>=4.0.0        # PDF generation

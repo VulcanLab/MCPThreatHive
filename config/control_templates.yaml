@@ -1,0 +1,100 @@
+# MCP Security Control Templates
+# ==============================
+# All control templates are defined here - NOT hardcoded in Python
+
+version: "2.0.0"
+last_updated: "2025-11-27"
+
+control_types:
+  tool_permission:
+    name: "Tool Permission Model"
+    description: "Define granular permissions for each MCP tool"
+    category: "access_control"
+    effectiveness: "high"
+    mitigates_threats: ["tool_privilege_escalation", "tool_abuse"]
+
+  tool_allowlist:
+    name: "Tool Allowlist"
+    description: "Restrict available tools to an approved list"
+    category: "access_control"
+    effectiveness: "high"
+    mitigates_threats: ["tool_identity_spoofing"]
+
+  input_sanitization:
+    name: "Input Sanitization"
+    description: "Sanitize and validate all inputs before processing"
+    category: "input_validation"
+    effectiveness: "high"
+    mitigates_threats: ["prompt_injection", "tool_response_injection"]
+
+  path_whitelist:
+    name: "Path Whitelist"
+    description: "Restrict file system access to approved paths"
+    category: "input_validation"
+    effectiveness: "high"
+    mitigates_threats: ["path_traversal", "api_key_leakage"]
+
+  url_whitelist:
+    name: "URL Whitelist"
+    description: "Restrict browser/HTTP access to approved URLs"
+    category: "input_validation"
+    effectiveness: "high"
+    mitigates_threats: ["ssrf_via_browser"]
+
+  output_validation:
+    name: "Output Validation"
+    description: "Validate and filter tool outputs before returning to LLM"
+    category: "output_filtering"
+    effectiveness: "high"
+    mitigates_threats: ["tool_response_injection", "prompt_injection"]
+
+  secret_redaction:
+    name: "Secret Redaction"
+    description: "Automatically redact sensitive data from outputs"
+    category: "output_filtering"
+    effectiveness: "high"
+    mitigates_threats: ["api_key_leakage", "context_extraction"]
+
+  rate_limiting:
+    name: "Rate Limiting"
+    description: "Limit the rate of tool calls and API requests"
+    category: "availability"
+    effectiveness: "medium"
+    mitigates_threats: ["context_flooding", "tool_resource_exhaustion"]
+
+  timeout_enforcement:
+    name: "Timeout Enforcement"
+    description: "Enforce timeouts on all tool operations"
+    category: "availability"
+    effectiveness: "medium"
+    mitigates_threats: ["tool_resource_exhaustion"]
+
+  tool_sandbox:
+    name: "Tool Sandbox"
+    description: "Execute tools in isolated sandbox environment"
+    category: "isolation"
+    effectiveness: "high"
+    mitigates_threats: ["path_traversal", "tool_privilege_escalation"]
+
+  comprehensive_logging:
+    name: "Comprehensive Logging"
+    description: "Log all tool calls and operations for audit"
+    category: "monitoring"
+    effectiveness: "medium"
+    mitigates_threats: ["audit_log_bypass"]
+
+  server_authentication:
+    name: "Server Authentication"
+    description: "Authenticate MCP server identity"
+    category: "authentication"
+    effectiveness: "high"
+    mitigates_threats: ["mcp_server_spoofing"]
+
+  tls_encryption:
+    name: "TLS Encryption"
+    description: "Encrypt all communications with TLS"
+    category: "encryption"
+    effectiveness: "high"
+    mitigates_threats: ["mcp_server_spoofing"]
+
+

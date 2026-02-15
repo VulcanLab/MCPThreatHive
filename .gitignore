@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+other/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.agent
+# Configuration files (should not be committed)
+.llm_provider_config.json
+.model_config.json
+*.backup
+
+# Documentation
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project
+data/*.json
+data/*.db
+data/knowledge_graphs/
+*.log
+
+# Docker
+.dockerignore
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.agent/rules/snyk_rules.md
+
+*.bak
