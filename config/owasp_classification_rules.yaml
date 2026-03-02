@@ -1,0 +1,1664 @@
+# OWASP Classification Rules for AI-Powered Threat Classification
+# These rules guide AI to classify threats into OWASP frameworks using semantic understanding
+# Includes complete definitions from OWASP Top 10 Web, OWASP Top 10 LLM, OWASP Top 10 Agentic, and MCP 38 Threats
+
+# OWASP Top 10 for Web Application Security (2025)
+owasp_web_top10:
+  A01:
+    name: "Broken Access Control"
+    full_name: "Broken Access Control"
+    description: "Violations of the principle of least privilege or deny by default, where users can act outside of their intended permissions. This often results from missing or improperly implemented access controls."
+    classification_rules:
+      - "Threat involves unauthorized access to resources or functions"
+      - "Attack bypasses access control checks or permission boundaries"
+      - "Threat exploits privilege escalation or horizontal/vertical privilege abuse"
+      - "Attack targets IDOR (Insecure Direct Object Reference) vulnerabilities"
+      - "Threat involves viewing or modifying someone else's data"
+      - "Attack manipulates JWT tokens, cookies, or session data to elevate privileges"
+    semantic_indicators:
+      - "Access to resources without proper authorization"
+      - "Bypassing permission checks or access controls"
+      - "Privilege escalation scenarios"
+      - "Unauthorized data access or modification"
+      - "Missing or improper access control enforcement"
+  
+  A02:
+    name: "Security Misconfiguration"
+    full_name: "Security Misconfiguration"
+    description: "Missing appropriate security hardening across any part of the application stack, or improperly configured permissions on cloud services, unnecessary features enabled, default accounts and passwords unchanged."
+    classification_rules:
+      - "Threat involves misconfigured security settings or controls"
+      - "Attack exploits default credentials or insecure defaults"
+      - "Threat targets unnecessary features or services that are enabled"
+      - "Attack leverages exposed error messages or stack traces"
+      - "Threat exploits missing security headers or directives"
+      - "Attack targets unpatched or outdated software"
+    semantic_indicators:
+      - "Configuration errors or misconfigurations"
+      - "Default or weak credentials in use"
+      - "Unnecessary features or services exposed"
+      - "Missing security hardening"
+      - "Exposed debugging information or error details"
+  
+  A03:
+    name: "Software Supply Chain Failures"
+    full_name: "Software Supply Chain Failures"
+    description: "Failures that allow compromised or malicious code to enter the software supply chain, including vulnerable dependencies, malicious packages, and lack of integrity verification."
+    classification_rules:
+      - "Threat involves compromised dependencies or third-party components"
+      - "Attack targets software supply chain or build pipeline"
+      - "Threat exploits vulnerable or outdated libraries"
+      - "Attack uses malicious packages or typosquatting"
+      - "Threat involves lack of SBOM or integrity verification"
+      - "Attack targets CI/CD pipeline or build systems"
+    semantic_indicators:
+      - "Compromised third-party components or dependencies"
+      - "Malicious code in supply chain"
+      - "Vulnerable or unpatched libraries"
+      - "Missing integrity checks or verification"
+      - "Supply chain attacks or compromise"
+  
+  A04:
+    name: "Cryptographic Failures"
+    full_name: "Cryptographic Failures"
+    description: "Failures related to cryptography (or lack thereof) that often lead to exposure of sensitive data. This includes weak algorithms, missing encryption, and improper key management."
+    classification_rules:
+      - "Threat involves weak or missing encryption"
+      - "Attack exploits cryptographic weaknesses or flaws"
+      - "Threat targets unencrypted sensitive data transmission"
+      - "Attack uses deprecated or weak cryptographic algorithms"
+      - "Threat involves poor key management or hardcoded keys"
+      - "Attack targets SSL/TLS misconfigurations"
+    semantic_indicators:
+      - "Weak or broken cryptography"
+      - "Unencrypted sensitive data"
+      - "Poor key management practices"
+      - "Deprecated cryptographic algorithms"
+      - "Missing or weak encryption"
+  
+  A05:
+    name: "Injection"
+    full_name: "Injection"
+    description: "An application is vulnerable to injection when user-supplied data is not validated, filtered, or sanitized. Common injection types include SQL, NoSQL, OS command, LDAP, and expression language injection."
+    classification_rules:
+      - "Threat involves untrusted data executed as code or commands"
+      - "Attack injects malicious code into queries or commands"
+      - "Threat exploits lack of input validation or sanitization"
+      - "Attack targets SQL, NoSQL, OS command, or other interpreters"
+      - "Threat involves code injection or command execution"
+      - "Attack uses crafted inputs to manipulate application logic"
+    semantic_indicators:
+      - "Injection of malicious code or commands"
+      - "Unvalidated or unsanitized user input"
+      - "Code execution through crafted inputs"
+      - "Command injection or SQL injection"
+      - "Interpreter manipulation"
+  
+  A06:
+    name: "Insecure Design"
+    full_name: "Insecure Design"
+    description: "Missing or ineffective control design representing different weaknesses expressed as 'missing or ineffective control design.' Insecure design is not the source for all other Top 10 risk categories; there is a difference between insecure design and insecure implementation."
+    classification_rules:
+      - "Threat stems from fundamental design flaws"
+      - "Attack exploits missing security controls in design"
+      - "Threat involves lack of threat modeling or security requirements"
+      - "Attack targets business logic flaws or workflow bypasses"
+      - "Threat exploits missing rate limiting or resource controls"
+      - "Attack abuses design assumptions or missing safeguards"
+    semantic_indicators:
+      - "Fundamental design weaknesses"
+      - "Missing security controls by design"
+      - "Business logic flaws"
+      - "Lack of threat modeling"
+      - "Design-level security gaps"
+  
+  A07:
+    name: "Authentication Failures"
+    full_name: "Authentication Failures"
+    description: "Confirmation of the user's identity, authentication, and session management is critical to protect against authentication-related attacks. Includes credential stuffing, brute force, and exposed session IDs."
+    classification_rules:
+      - "Threat involves weak or broken authentication mechanisms"
+      - "Attack targets credential theft or session hijacking"
+      - "Threat exploits weak password policies or requirements"
+      - "Attack uses credential stuffing or brute force"
+      - "Threat involves session management vulnerabilities"
+      - "Attack targets missing or weak multi-factor authentication"
+    semantic_indicators:
+      - "Weak authentication mechanisms"
+      - "Credential compromise or theft"
+      - "Session management issues"
+      - "Brute force or credential stuffing attacks"
+      - "Missing or weak MFA"
+  
+  A08:
+    name: "Integrity Failures"
+    full_name: "Software and Data Integrity Failures"
+    description: "Relates to code and infrastructure that does not protect against integrity violations. This includes insecure CI/CD pipelines, auto-update without integrity verification, and insecure deserialization."
+    classification_rules:
+      - "Threat involves compromised software integrity"
+      - "Attack targets update mechanisms without verification"
+      - "Threat exploits insecure deserialization"
+      - "Attack compromises CI/CD pipeline or build process"
+      - "Threat involves missing digital signatures or checksums"
+      - "Attack targets software distribution or update channels"
+    semantic_indicators:
+      - "Compromised software or data integrity"
+      - "Unverified updates or downloads"
+      - "Insecure deserialization"
+      - "CI/CD pipeline compromise"
+      - "Missing integrity verification"
+  
+  A09:
+    name: "Logging & Alerting Failures"
+    full_name: "Security Logging and Monitoring Failures"
+    description: "Without logging and monitoring, breaches cannot be detected. Insufficient logging, detection, monitoring, and active response occurs any time there are insufficient security-related events logged."
+    classification_rules:
+      - "Threat involves missing or inadequate logging"
+      - "Attack operates without detection due to monitoring gaps"
+      - "Threat exploits lack of security event logging"
+      - "Attack targets audit trail tampering or log deletion"
+      - "Threat involves missing alerting or incident response"
+      - "Attack succeeds due to lack of observability"
+    semantic_indicators:
+      - "Missing or inadequate logging"
+      - "Lack of monitoring or alerting"
+      - "Undetected malicious activity"
+      - "Insufficient audit trails"
+      - "Monitoring blind spots"
+  
+  A10:
+    name: "Mishandling of Exceptions"
+    full_name: "Mishandling of Exceptions"
+    description: "When software doesn't properly prevent, detect, or recover from error conditions and edge cases. This leads to unpredictable behavior, crashes, logic bugs, race conditions, and can enable attackers to bypass security checks."
+    classification_rules:
+      - "Threat involves improper error handling or exception management"
+      - "Attack exploits race conditions or timing issues"
+      - "Threat targets uncaught exceptions or error states"
+      - "Attack manipulates error conditions to bypass controls"
+      - "Threat involves resource exhaustion or deadlocks"
+      - "Attack exploits undefined or inconsistent state handling"
+    semantic_indicators:
+      - "Poor exception or error handling"
+      - "Race conditions or timing attacks"
+      - "Uncaught exceptions exposing vulnerabilities"
+      - "Inconsistent state management"
+      - "Resource exhaustion due to error conditions"
+
+# OWASP Top 10 for Large Language Model Applications (v1.1)
+owasp_llm_top10:
+  LLM01:
+    name: "Prompt Injection"
+    full_name: "Prompt injection"
+    description: "Prompt injections are maliciously crafted inputs that lead to an LLM performing in unintended ways that expose data, or performing unauthorized actions such as remote code execution. It's no shock that prompt injection is the number one threat to LLMs because it exploits the design of LLMs rather than a flaw that can be patched. In some instances there is no way to stop the threat; you can only mitigate the damage it causes."
+    detailed_description: |
+      There are two kinds of prompt injections: direct prompt injections and indirect prompt injections.
+      
+      Direct prompt injection: A threat actor provides a prompt designed to circumnavigate the underlying system prompts that AI developers have put in place to secure the model. One direct prompt injection method popular with AI hackers is called DAN, or "Do Anything Now." DAN uses role play to trick ChatGPT into ignoring the underlying guardrails OpenAI had put in place to keep the LLM from providing dangerous, illegal, or unethical information.
+      
+      Indirect prompt injection: Here, the LLM user unwittingly provides the LLM with data from a bad actor who has maliciously added LLM prompts (usually not visible to the human reader) into the source. Most LLMs don't differentiate between user prompts and external data, which is what makes indirect prompt injections possible and a real threat.
+    classification_rules:
+      - "Threat involves manipulating LLM behavior through crafted inputs"
+      - "Attack uses prompt injection, jailbreak, or instruction manipulation"
+      - "Threat exploits LLM's inability to distinguish instructions from data"
+      - "Attack targets system prompts, user prompts, or hidden instructions"
+      - "Direct prompt injection: attacker provides malicious prompt directly"
+      - "Indirect prompt injection: malicious prompts hidden in external data"
+    keywords:
+      - "prompt injection"
+      - "jailbreak"
+      - "crafted input"
+      - "manipulating llm"
+      - "prompt attack"
+      - "instruction injection"
+      - "system prompt"
+      - "ignore previous"
+      - "dan"
+      - "do anything now"
+      - "indirect prompt injection"
+      - "direct prompt injection"
+    examples:
+      - "Direct prompt injection attacks"
+      - "Indirect prompt injection via data"
+      - "Tool description poisoning"
+      - "Preference manipulation"
+      - "DAN (Do Anything Now) attacks"
+
+  LLM02:
+    name: "Sensitive Information Disclosure"
+    full_name: "Sensitive information disclosure"
+    description: "Ask the right question and an LLM may pour its heart out, which might include your organization's or customers' sensitive information, including personal identifiable information (PII), financial details, health records, confidential business data, security credentials, and legal documents. Further, poorly configured models embedded into applications may give up proprietary algorithms and other important confidential details that may result in an intellectual property (IP) breach."
+    classification_rules:
+      - "Threat leads to exposure of sensitive information"
+      - "Attack causes data leakage or information disclosure"
+      - "Threat involves PII, credentials, or confidential data exposure"
+      - "Attack exploits privacy inversion or data aggregation"
+      - "Poorly configured models expose proprietary algorithms"
+      - "Intellectual property breach through model exposure"
+    keywords:
+      - "sensitive information"
+      - "data leak"
+      - "pii"
+      - "credential exposure"
+      - "information disclosure"
+      - "privacy leak"
+      - "confidential data"
+      - "intellectual property"
+      - "proprietary algorithms"
+    examples:
+      - "Credential theft"
+      - "Data exfiltration"
+      - "Privacy inversion"
+      - "Multitenancy failure"
+      - "MITM attacks"
+      - "PII exposure"
+
+  LLM03:
+    name: "Supply Chain Vulnerabilities"
+    full_name: "Supply chain"
+    description: "Few are building LLMs entirely from scratch and are instead relying on existing technology to build atop. Supply chain vulnerabilities can come from malicious or vulnerable models or training data from places like Hugging Face or any other third-party component. Third-party models and training data can be prone to poisoning attacks and any third-party components can contain the classic vulnerabilities we already know and loathe."
+    classification_rules:
+      - "Threat involves compromised third-party components or services"
+      - "Attack exploits supply chain vulnerabilities"
+      - "Threat targets tools, plugins, MCP servers, or dependencies"
+      - "Attack uses malicious or compromised upstream components"
+      - "Third-party models from Hugging Face or similar platforms"
+      - "Malicious or vulnerable training data"
+    keywords:
+      - "supply chain"
+      - "third-party"
+      - "dependency"
+      - "malicious package"
+      - "compromised component"
+      - "upstream"
+      - "plugin vulnerability"
+      - "hugging face"
+      - "third-party models"
+      - "training data"
+    examples:
+      - "Tool shadowing"
+      - "Shadow MCP servers"
+      - "Supply chain compromise"
+      - "Missing integrity verification"
+      - "Rug pull"
+      - "Malicious models from third-party sources"
+
+  LLM04:
+    name: "Data and Model Poisoning"
+    full_name: "Data and model poisoning"
+    description: "Your models are what they eat, and LLMs ingest quite a bit. Data poisoning occurs when data involved in pre-training, fine-tuning, or augmenting (as with RAG) an LLM is manipulated to introduce vulnerabilities that affect the model's security, ethical behavior, or performance. Data poisoning is a tough vulnerability to fight due to the sheer quantity of data that LLMs take in and the difficulty in verifying all of that data. Model poisoning can happen when open source models on platforms like Hugging Face contain malware or backdoors."
+    classification_rules:
+      - "Threat involves poisoning training data or knowledge bases"
+      - "Attack manipulates data used for model training or fine-tuning"
+      - "Threat corrupts RAG databases, embeddings, or context"
+      - "Attack targets data sources that influence LLM behavior"
+      - "Pre-training, fine-tuning, or RAG data manipulation"
+      - "Open source models containing malware or backdoors"
+    keywords:
+      - "training data"
+      - "data poisoning"
+      - "poisoned data"
+      - "tampered training"
+      - "model training"
+      - "fine-tuning attack"
+      - "backdoor model"
+      - "rag poisoning"
+      - "model poisoning"
+    examples:
+      - "Tool description poisoning"
+      - "Full schema poisoning"
+      - "Resource content poisoning"
+      - "RAG database poisoning"
+      - "Backdoor models"
+
+  LLM05:
+    name: "Improper Output Handling"
+    full_name: "Improper output handling"
+    description: "Improper output handling describes a situation where plugins or other components accept LLM output without secure practices such as sanitization and validation. This can lead to multiple undesirable behaviors, including cross-site scripting and remote code execution on backend systems. Example: After an indirect prompt injection is left in the review of a product by a threat actor, an LLM tasked with summarizing reviews for a user outputs malicious JavaScript code that is interpreted by the user's browser."
+    classification_rules:
+      - "Threat involves unvalidated LLM outputs causing security issues"
+      - "Attack exploits LLM-generated code or commands"
+      - "Threat leads to code execution, XSS, SQL injection, or command injection"
+      - "Attack uses LLM output without proper sanitization"
+      - "Plugins accept LLM output without validation"
+      - "Malicious JavaScript or code in LLM output"
+    keywords:
+      - "insecure output"
+      - "output handling"
+      - "unvalidated output"
+      - "code execution"
+      - "xss"
+      - "sql injection"
+      - "command injection"
+      - "output sanitization"
+      - "cross-site scripting"
+    examples:
+      - "Command injection via tool output"
+      - "Web vulnerabilities from LLM responses"
+      - "Code execution from generated content"
+      - "XSS from LLM output"
+
+  LLM06:
+    name: "Excessive Agency"
+    full_name: "Excessive agency"
+    description: "When interfacing with other systems, LLMs need what they need and nothing more. When they have too much functionality, permission, or autonomy, you've got an excessive agency vulnerability on your hands. Examples include using a plugin to let an LLM read files that also allows it to write or delete files (excessive functionality), an LLM designed to read a single user's files but has access to every user's files (excessive permissions), and a plugin that allows an LLM to elect to delete a user's files without that user's input (excessive autonomy)."
+    classification_rules:
+      - "Threat involves excessive autonomy or unchecked agent actions"
+      - "Attack exploits agent's ability to take unintended actions"
+      - "Threat leads to autonomous decisions without proper oversight"
+      - "Attack bypasses human-in-the-loop controls"
+      - "Excessive functionality: plugin does more than needed"
+      - "Excessive permissions: access beyond intended scope"
+      - "Excessive autonomy: actions without user input"
+    keywords:
+      - "excessive agency"
+      - "autonomous action"
+      - "unchecked autonomy"
+      - "unintended action"
+      - "agent authority"
+      - "autonomous decision"
+      - "excessive functionality"
+      - "excessive permissions"
+    examples:
+      - "Privilege escalation"
+      - "Excessive permissions"
+      - "Parasitic toolchain"
+      - "Agent logic drift"
+      - "No observability"
+
+  LLM07:
+    name: "System Prompt Leakage"
+    full_name: "System prompt leakage"
+    description: "System prompts are used to guide model behavior but they sometimes include secrets and sensitive information which can leak. Further, system prompts may be set up to put important security control duties like authentication onto the LLM instead of more robust systems. System prompt leakage isn't a real issue if your system prompt does not include any secrets or other information that would be useful to a malicious actor."
+    classification_rules:
+      - "Threat involves insecure plugin or tool design"
+      - "Attack exploits insufficient access control in plugins"
+      - "Threat leads to remote code execution or privilege escalation"
+      - "Attack targets plugin vulnerabilities or misconfigurations"
+      - "System prompts include secrets or sensitive information"
+      - "Authentication delegated to LLM instead of robust systems"
+    keywords:
+      - "insecure plugin"
+      - "plugin design"
+      - "tool vulnerability"
+      - "insufficient access control"
+      - "remote code execution"
+      - "rce"
+      - "plugin exploit"
+      - "system prompt leakage"
+      - "secret leakage"
+    examples:
+      - "Identity spoofing"
+      - "Replay attacks"
+      - "Privilege escalation"
+      - "Command injection"
+      - "Path traversal"
+      - "Insecure stdio handling"
+
+  LLM08:
+    name: "Vector and Embedding Weaknesses"
+    full_name: "Vector and embedding weaknesses"
+    description: "Vector and embedding weaknesses enter the picture when using retrieval augmented generation (RAG) with LLMs. A number of risks fall under this category including unauthorized access and data leakage, cross-context information leaks and knowledge conflicts, embedding inversion attacks, and behavior alteration."
+    classification_rules:
+      - "Threat involves RAG-related vulnerabilities"
+      - "Attack exploits vector or embedding weaknesses"
+      - "Threat leads to unauthorized access or data leakage"
+      - "Cross-context information leaks"
+      - "Embedding inversion attacks"
+      - "Behavior alteration through embeddings"
+    keywords:
+      - "vector"
+      - "embedding"
+      - "rag"
+      - "retrieval augmented generation"
+      - "cross-context"
+      - "embedding inversion"
+      - "knowledge conflicts"
+    examples:
+      - "RAG database vulnerabilities"
+      - "Embedding attacks"
+      - "Cross-context leaks"
+
+  LLM09:
+    name: "Misinformation"
+    full_name: "Misinformation"
+    description: "Even the best LLMs aren't infallible. Misinformation can occur from biases introduced in training data or from LLMs making up for missing training data by hallucinating outputs based on statistical models and not actual context understanding. LLMs always have limits in what they can do and what they can do well, but they are often seen by the public as magical bases of knowledge in anything and everything. They aren't. Ask ChatGPT a math question or information about case law and you might see results that look accurate on first read but are in fact inaccurate or completely fabricated."
+    classification_rules:
+      - "Threat involves blind trust in LLM outputs or safeguards"
+      - "Attack exploits human overreliance on AI decisions"
+      - "Threat leads to uncritical acceptance of agent recommendations"
+      - "Attack causes approval fatigue or oversight failure"
+      - "Hallucinated outputs presented as fact"
+      - "Biases from training data"
+    keywords:
+      - "overreliance"
+      - "blind trust"
+      - "uncritical acceptance"
+      - "human oversight"
+      - "verification failure"
+      - "hallucination trust"
+      - "misinformation"
+      - "hallucination"
+      - "fabricated"
+    examples:
+      - "Overreliance on LLM safeguards"
+      - "Insecure HITL bypass"
+      - "Approval fatigue"
+      - "Agent logic drift"
+      - "Hallucinated information"
+
+  LLM10:
+    name: "Unbounded Consumption"
+    full_name: "Unbounded consumption"
+    description: "The compute resources of LLMs make them incredibly powerful but giving users too much of that power can lead to undesirable outcomes. Inference is the process of generating a reply to a user's prompt and unbounded consumption of inference can result in denial of service (DoS), economic losses (from all that extra compute), model theft, and service degradation for all of your non-malicious users. Likewise, those resources are also highly desirable to malicious actors who would like to see them redirected for their own purposes such as crypto-mining."
+    classification_rules:
+      - "Threat causes resource exhaustion or service disruption"
+      - "Attack overloads LLM with excessive tokens or requests"
+      - "Threat exploits protocol gaps or weak transport security"
+      - "Attack leads to denial of wallet or cost attacks"
+      - "Unbounded inference consumption"
+      - "Economic losses from excessive compute"
+      - "Crypto-mining attacks"
+    keywords:
+      - "denial of service"
+      - "dos"
+      - "resource exhaustion"
+      - "model dos"
+      - "overload"
+      - "excessive tokens"
+      - "context flooding"
+      - "unbounded consumption"
+      - "denial of wallet"
+      - "crypto-mining"
+    examples:
+      - "Protocol gaps causing DoS"
+      - "Resource exhaustion attacks"
+      - "Denial of wallet"
+      - "Crypto-mining attacks"
+
+# OWASP Top 10 for Agentic Applications (2026)
+# OWASP Agentic Top 10 definitions
+owasp_agentic_top10:
+  ASI01:
+    name: "Agent Goal Hijack"
+    description: "Agent Goal Hijack occurs when an attacker alters an agent's objectives or decision path through malicious text content. Agents often cannot reliably separate instructions from data. They may pursue unintended actions when processing poisoned emails, PDFs, meeting invites, RAG documents, or web content."
+    detailed_description: |
+      Examples include indirect prompt injection that causes exfiltration of internal data, malicious documents retrieved by a planning agent, or calendar invites that influence scheduling or prioritization.
+      
+      Mitigation focuses on treating natural language input as untrusted, applying prompt injection filtering, limiting tool privileges, and requiring human approval for goal changes or high impact actions.
+    classification_rules:
+      - "Threat alters agent's objectives or decision path"
+      - "Attack uses malicious text content to hijack agent behavior"
+      - "Threat exploits agent's inability to separate instructions from data"
+      - "Attack targets poisoned emails, PDFs, meeting invites, RAG documents, or web content"
+      - "Indirect prompt injection causing data exfiltration"
+      - "Malicious documents retrieved by planning agents"
+    keywords:
+      - "agent goal hijack"
+      - "goal hijacking"
+      - "agent goal"
+      - "decision path"
+      - "objectives"
+      - "poisoned emails"
+      - "poisoned pdfs"
+      - "rag documents"
+      - "indirect prompt injection"
+      - "agent behavior hijacking"
+      - "agent takeover"
+      - "calendar invites"
+    examples:
+      - "Tool description poisoning"
+      - "Resource content poisoning"
+      - "Preference manipulation"
+      - "Direct/indirect prompt injection"
+      - "Multi-agent hijacking"
+      - "Agent logic drift"
+
+  ASI02:
+    name: "Tool Misuse and Exploitation"
+    description: "Tool Misuse occurs when an agent uses legitimate tools in unsafe ways. Ambiguous prompts, misalignment, or manipulated input can cause agents to call tools with destructive parameters or chain tools together in unexpected sequences that lead to data loss or exfiltration."
+    detailed_description: |
+      Examples include over privileged tools that can write to production systems, poisoned tool descriptors in MCP servers, or shell tools that run unvalidated commands.
+      
+      Aikido's PromptPwnd research is a real example of this pattern. Untrusted GitHub issue or pull request content was injected into prompts in certain GitHub Actions and GitLab workflows. When paired with powerful tools and tokens, this resulted in secret exposure or repository modifications.
+      
+      Mitigation includes strict tool permission scoping, sandboxed execution, argument validation, and adding policy controls to every tool invocation.
+    classification_rules:
+      - "Threat involves agent using tools in unsafe or unintended ways"
+      - "Attack exploits ambiguous prompts or tool misalignment"
+      - "Threat leads to destructive tool parameters or unexpected tool chaining"
+      - "Attack uses over-privileged tools or unvalidated commands"
+      - "Over privileged tools writing to production systems"
+      - "Poisoned tool descriptors in MCP servers"
+      - "Shell tools running unvalidated commands"
+    keywords:
+      - "tool misuse"
+      - "tool exploitation"
+      - "api abuse"
+      - "function abuse"
+      - "tool manipulation"
+      - "unintended tool use"
+      - "destructive parameters"
+      - "tool chaining"
+      - "poisoned tool descriptors"
+      - "unvalidated commands"
+      - "shell tools"
+      - "over privileged"
+    examples:
+      - "Command injection"
+      - "Path traversal"
+      - "Web vulnerabilities"
+      - "Tool shadowing"
+      - "Data exfiltration via tools"
+      - "Tool manifest reconnaissance"
+
+  ASI03:
+    name: "Identity and Privilege Abuse"
+    description: "Agents often inherit user or system identities, which can include high privilege credentials, session tokens, and delegated access. Identity and Privilege Abuse occurs when these privileges are unintentionally reused, escalated, or passed across agents."
+    detailed_description: |
+      Examples include caching SSH keys in agent memory, cross agent delegation without scoping, or confused deputy scenarios.
+      
+      Mitigation includes short lived credentials, task scoped permissions, policy enforced authorization on every action, and isolated identities for agents.
+    classification_rules:
+      - "Threat involves abuse of identity or privilege"
+      - "Attack exploits inherited credentials, tokens, or delegated access"
+      - "Threat leads to privilege escalation or unauthorized access"
+      - "Attack targets identity spoofing, credential theft, or confused deputy scenarios"
+      - "Caching SSH keys in agent memory"
+      - "Cross agent delegation without scoping"
+    keywords:
+      - "identity abuse"
+      - "privilege abuse"
+      - "credential theft"
+      - "impersonation"
+      - "privilege escalation"
+      - "unauthorized access"
+      - "token theft"
+      - "session tokens"
+      - "delegated access"
+      - "ssh keys"
+      - "confused deputy"
+    examples:
+      - "Identity spoofing"
+      - "Credential theft"
+      - "Replay attacks"
+      - "Privilege escalation"
+      - "Multitenancy failure"
+      - "MITM attacks"
+      - "DNS rebinding"
+
+  ASI04:
+    name: "Agentic Supply Chain Vulnerabilities"
+    description: "Agentic supply chains include tools, plugins, prompt templates, model files, external MCP servers, and even other agents. Many of these components are fetched dynamically at runtime. Any compromised component can alter agent behavior or expose data."
+    detailed_description: |
+      Examples include malicious MCP servers impersonating trusted tools, poisoned prompt templates, or vulnerable third party agents used in orchestrated workflows.
+      
+      Mitigation includes signed manifests, curated registries, dependency pinning, sandboxing, and kill switches for compromised components.
+    classification_rules:
+      - "Threat involves compromised supply chain components"
+      - "Attack targets tools, plugins, prompt templates, model files, or MCP servers"
+      - "Threat exploits dynamically fetched components"
+      - "Attack uses malicious or vulnerable third-party components"
+      - "Malicious MCP servers impersonating trusted tools"
+      - "Poisoned prompt templates"
+    keywords:
+      - "agentic supply chain"
+      - "supply chain vulnerabilities"
+      - "tools"
+      - "plugins"
+      - "prompt templates"
+      - "model files"
+      - "external mcp servers"
+      - "compromised component"
+      - "malicious mcp servers"
+      - "poisoned prompt templates"
+      - "vulnerable third party agents"
+    examples:
+      - "Tool shadowing"
+      - "Cross-server tool shadowing"
+      - "Shadow MCP servers"
+      - "Supply chain compromise"
+      - "Missing integrity verification"
+      - "Rug pull"
+
+  ASI05:
+    name: "Unexpected Code Execution"
+    description: "Unexpected Code Execution occurs when agents generate or run code or commands unsafely. This includes shell commands, scripts, migrations, template evaluation, or deserialization triggered through generated output."
+    detailed_description: |
+      Examples include code assistants running generated patches directly, prompt injection that triggers shell commands, or unsafe deserialization in agent memory systems.
+      
+      Mitigation involves treating generated code as untrusted, removing direct evaluation, using hardened sandboxes, and requiring previews or review steps before execution.
+    classification_rules:
+      - "Threat involves unsafe code or command execution"
+      - "Attack exploits generated code or commands"
+      - "Threat leads to code execution without proper validation"
+      - "Attack targets code assistants, shell commands, or unsafe deserialization"
+      - "Code assistants running generated patches directly"
+      - "Unsafe deserialization in agent memory"
+    keywords:
+      - "unexpected code execution"
+      - "code execution"
+      - "shell commands"
+      - "scripts"
+      - "migrations"
+      - "template evaluation"
+      - "deserialization"
+      - "generated code"
+      - "unsafe deserialization"
+      - "code assistants"
+      - "generated patches"
+    examples:
+      - "Command injection"
+      - "Excessive permissions leading to code execution"
+      - "Insecure stdio handling"
+      - "Sandbox escape"
+
+  ASI06:
+    name: "Memory and Context Poisoning"
+    description: "Agents rely on memory systems, embeddings, RAG databases, and summaries. Attackers can poison this memory to influence future decisions or behavior."
+    detailed_description: |
+      Examples include RAG poisoning, cross tenant context leakage, and long term drift caused by repeated exposure to adversarial content.
+      
+      Mitigation includes segmentation of memory, filtering before ingestion, provenance tracking, and expiry of suspicious entries.
+    classification_rules:
+      - "Threat involves poisoning agent memory or context"
+      - "Attack targets memory systems, embeddings, RAG databases, or summaries"
+      - "Threat leads to long-term drift or cross-tenant context leakage"
+      - "Attack uses adversarial content to influence future decisions"
+      - "RAG poisoning"
+      - "Cross tenant context leakage"
+      - "Long term drift"
+    keywords:
+      - "memory poisoning"
+      - "context poisoning"
+      - "rag poisoning"
+      - "memory systems"
+      - "embeddings"
+      - "rag databases"
+      - "summaries"
+      - "cross tenant context leakage"
+      - "long term drift"
+      - "adversarial content"
+    examples:
+      - "Tool description poisoning"
+      - "Full schema poisoning"
+      - "Resource content poisoning"
+      - "Privacy inversion"
+      - "Indirect prompt injection"
+
+  ASI07:
+    name: "Insecure Inter Agent Communication"
+    description: "Multi agent systems often exchange messages across MCP, A2A channels, RPC endpoints, or shared memory. If communication is not authenticated, encrypted, or semantically validated, attackers can intercept or inject instructions."
+    detailed_description: |
+      Examples include spoofed agent identities, replayed delegation messages, or message tampering on unprotected channels.
+      
+      Mitigation includes mutual TLS, signed payloads, anti replay protections, and authenticated discovery mechanisms.
+    classification_rules:
+      - "Threat involves insecure communication between agents"
+      - "Attack exploits unauthenticated or unencrypted agent communication"
+      - "Threat leads to message interception, injection, or tampering"
+      - "Attack targets MCP channels, A2A channels, RPC endpoints, or shared memory"
+      - "Spoofed agent identities"
+      - "Replayed delegation messages"
+    keywords:
+      - "insecure inter agent communication"
+      - "inter agent communication"
+      - "multi agent systems"
+      - "mcp channels"
+      - "a2a channels"
+      - "rpc endpoints"
+      - "shared memory"
+      - "spoofed agent identities"
+      - "replayed delegation"
+      - "message tampering"
+    examples:
+      - "MITM attacks"
+      - "Protocol gaps"
+      - "DNS rebinding"
+      - "Multi-agent hijacking"
+
+  ASI08:
+    name: "Cascading Failures"
+    description: "A small error in one agent can propagate across planning, execution, memory, and downstream systems. The interconnected nature of agents means failures can compound rapidly."
+    detailed_description: |
+      Examples include a hallucinating planner issuing destructive tasks to multiple agents or poisoned state being propagated through deployment and policy agents.
+      
+      Mitigation includes isolation boundaries, rate limits, circuit breakers, and pre deployment testing of multi step plans.
+    classification_rules:
+      - "Threat involves failures propagating across agent systems"
+      - "Attack exploits interconnected nature of multi-agent systems"
+      - "Threat leads to cascading failures in planning, execution, or memory"
+      - "Attack causes small errors to compound into system-wide failures"
+      - "Hallucinating planner issuing destructive tasks"
+      - "Poisoned state propagation"
+    keywords:
+      - "cascading failures"
+      - "propagate"
+      - "planning"
+      - "execution"
+      - "memory"
+      - "downstream systems"
+      - "hallucinating planner"
+      - "destructive tasks"
+      - "poisoned state"
+      - "deployment agents"
+      - "policy agents"
+    examples:
+      - "Protocol gaps leading to failures"
+      - "Resource exhaustion causing cascades"
+      - "Agent logic drift propagating errors"
+
+  ASI09:
+    name: "Human Agent Trust Exploitation"
+    description: "Users often over trust agent recommendations or explanations. Attackers or misaligned agents can use this trust to influence decisions or extract sensitive information."
+    detailed_description: |
+      Examples include coding assistants introducing subtle backdoors, financial copilots approving fraudulent transfers, or support agents persuading users to reveal credentials.
+      
+      Mitigation involves forced confirmations for sensitive actions, immutable logs, clear risk indicators, and avoiding persuasive language in critical workflows.
+    classification_rules:
+      - "Threat exploits human over-trust in agents"
+      - "Attack uses agent recommendations or explanations to manipulate users"
+      - "Threat leads to compromised decisions or information extraction"
+      - "Attack targets human-in-the-loop bypass or approval fatigue"
+      - "Coding assistants introducing backdoors"
+      - "Financial copilots approving fraudulent transfers"
+    keywords:
+      - "human agent trust exploitation"
+      - "over trust"
+      - "agent recommendations"
+      - "agent explanations"
+      - "misaligned agents"
+      - "coding assistants"
+      - "financial copilots"
+      - "support agents"
+      - "persuasive language"
+      - "reveal credentials"
+    examples:
+      - "Overreliance on LLM safeguards"
+      - "Insecure HITL bypass"
+      - "Approval fatigue"
+
+  ASI10:
+    name: "Rogue Agents"
+    description: "Rogue Agents are compromised or misaligned agents that act harmfully while appearing legitimate. They may self repeat actions, persist across sessions, or impersonate other agents."
+    detailed_description: |
+      Examples include agents that continue exfiltrating data after a single prompt injection, approval agents that silently approve unsafe actions, or cost optimizers deleting backups.
+      
+      Mitigation includes strict governance, sandboxing, behavioral monitoring, and kill switches.
+    classification_rules:
+      - "Threat involves compromised or misaligned agents"
+      - "Attack uses agents that appear legitimate but act harmfully"
+      - "Threat leads to persistent malicious behavior across sessions"
+      - "Attack targets agent impersonation or invisible malicious activity"
+      - "Agents continuing exfiltration after prompt injection"
+      - "Approval agents silently approving unsafe actions"
+    keywords:
+      - "rogue agents"
+      - "compromised agents"
+      - "misaligned agents"
+      - "self repeat actions"
+      - "persist across sessions"
+      - "impersonate other agents"
+      - "continue exfiltrating"
+      - "approval agents"
+      - "silently approve"
+      - "cost optimizers"
+      - "invisible activity"
+    examples:
+      - "No observability leading to rogue behavior"
+      - "Agents that persist malicious actions"
+
+# MCP 38 Threats
+# MCP Threat definitions
+mcp_threats:
+  MCP-01:
+    name: "Identity Spoofing / Improper Authentication"
+    category: "Improper Authentication and Identity Management"
+    description: "Weak or absent authentication allows attackers to impersonate legitimate MCP clients, servers, or agents, leading to unauthorized access and corrupted audit trails."
+    risk_level: "High"
+    stride: ["Spoofing"]
+    keywords:
+      - "identity spoofing"
+      - "improper authentication"
+      - "weak authentication"
+      - "absent authentication"
+      - "impersonate"
+      - "unauthorized access"
+  
+  MCP-02:
+    name: "Credential Theft / Token Theft"
+    category: "Improper Authentication and Identity Management"
+    description: "OAuth tokens, API keys, or secrets are stolen via insecure storage or transmission, enabling impersonation and privilege escalation."
+    risk_level: "High"
+    stride: ["Spoofing", "Information Disclosure"]
+    keywords:
+      - "credential theft"
+      - "token theft"
+      - "oauth token"
+      - "api key"
+      - "secret"
+      - "stolen"
+  
+  MCP-03:
+    name: "Replay Attacks / Session Hijacking"
+    category: "Session and Transport Security Failures"
+    description: "Intercepted tokens or session identifiers are reused to impersonate legitimate agents and perform unauthorized actions."
+    risk_level: "High"
+    stride: ["Spoofing", "Repudiation"]
+    keywords:
+      - "replay attack"
+      - "session hijacking"
+      - "intercepted token"
+      - "session identifier"
+      - "reused"
+  
+  MCP-04:
+    name: "Privilege Escalation & Confused Deputy"
+    category: "Missing or Improper Access Control"
+    description: "Misconfigured access control or delegation logic allows attackers to gain unauthorized elevated permissions."
+    risk_level: "High"
+    stride: ["Tampering", "Elevation of Privilege"]
+    keywords:
+      - "privilege escalation"
+      - "confused deputy"
+      - "unauthorized elevated permissions"
+      - "delegation abuse"
+  
+  MCP-05:
+    name: "Excessive Permissions / Overexposure"
+    category: "Missing or Improper Access Control"
+    description: "MCP tools or agents are granted overly broad permissions, increasing impact if compromised."
+    risk_level: "Medium"
+    stride: ["Elevation of Privilege"]
+    keywords:
+      - "excessive permissions"
+      - "overexposure"
+      - "overly broad permissions"
+      - "overprivileged"
+  
+  MCP-06:
+    name: "Improper Multitenancy & Isolation Failure"
+    category: "Missing or Improper Access Control"
+    description: "Weak isolation in multi-tenant MCP deployments leads to cross-tenant data leakage or privilege escalation."
+    risk_level: "High"
+    stride: ["Information Disclosure", "Elevation of Privilege"]
+    keywords:
+      - "multitenancy"
+      - "isolation failure"
+      - "cross-tenant"
+      - "tenant isolation"
+  
+  MCP-07:
+    name: "Command Injection"
+    category: "Input Validation/Sanitization Failures"
+    description: "Unvalidated LLM-generated inputs are executed as system commands, leading to RCE."
+    risk_level: "High"
+    stride: ["Tampering", "Elevation of Privilege"]
+    keywords:
+      - "command injection"
+      - "rce"
+      - "remote code execution"
+      - "shell command"
+      - "subprocess"
+      - "os.system"
+      - "exec"
+  
+  MCP-08:
+    name: "File System Exposure / Path Traversal"
+    category: "Inadequate Data Protection Controls"
+    description: "Improper path validation allows unauthorized file access beyond intended directories."
+    risk_level: "High"
+    stride: ["Information Disclosure"]
+    keywords:
+      - "path traversal"
+      - "directory traversal"
+      - "file system exposure"
+      - "../"
+      - "..\\"
+      - "unauthorized file access"
+  
+  MCP-09:
+    name: "Traditional Web Vulnerabilities (SSRF, XSS)"
+    category: "Input Validation/Sanitization Failures"
+    description: "MCP servers exposing HTTP interfaces inherit classic web vulnerabilities."
+    risk_level: "Medium"
+    stride: ["Tampering", "Information Disclosure", "Denial of Service"]
+    keywords:
+      - "ssrf"
+      - "xss"
+      - "cross-site scripting"
+      - "server-side request forgery"
+      - "web vulnerability"
+  
+  MCP-10:
+    name: "Tool Description Poisoning"
+    category: "Data/Control Boundary Distinction Failure"
+    description: "Hidden malicious instructions in tool metadata manipulate LLM behavior."
+    risk_level: "High"
+    stride: ["Tampering"]
+    keywords:
+      - "tool description poisoning"
+      - "tool metadata"
+      - "hidden instruction"
+      - "tool description"
+  
+  MCP-11:
+    name: "Full Schema Poisoning (FSP)"
+    category: "Data/Control Boundary Distinction Failure"
+    description: "Structural poisoning of tool schemas affects all invocations while evading detection."
+    risk_level: "High"
+    stride: ["Tampering"]
+    keywords:
+      - "full schema poisoning"
+      - "fsp"
+      - "schema poisoning"
+      - "tool schema"
+      - "structural poisoning"
+  
+  MCP-12:
+    name: "Resource Content Poisoning"
+    category: "Missing Integrity Controls"
+    description: "Persistent indirect prompt injection via poisoned documents, databases, or resources."
+    risk_level: "High"
+    stride: ["Tampering"]
+    keywords:
+      - "resource content poisoning"
+      - "indirect prompt injection"
+      - "poisoned document"
+      - "poisoned database"
+  
+  MCP-13:
+    name: "Tool Shadowing / Name Spoofing"
+    category: "Missing Integrity Controls"
+    description: "Malicious tools mimic legitimate names to trick LLM selection."
+    risk_level: "Medium"
+    stride: ["Spoofing", "Elevation of Privilege"]
+    keywords:
+      - "tool shadowing"
+      - "name spoofing"
+      - "tool name collision"
+      - "mimic legitimate"
+  
+  MCP-14:
+    name: "Cross-Server Tool Shadowing"
+    category: "Missing Integrity Controls"
+    description: "Malicious server overrides or intercepts tool calls intended for another server."
+    risk_level: "Medium"
+    stride: ["Spoofing", "Elevation of Privilege"]
+    keywords:
+      - "cross-server tool shadowing"
+      - "server override"
+      - "intercept tool call"
+  
+  MCP-15:
+    name: "Preference Manipulation Attack (PMPA)"
+    category: "Trust Boundary Failures"
+    description: "Tool metadata biases LLM decision-making toward attacker-controlled tools."
+    risk_level: "Medium"
+    stride: ["Tampering"]
+    keywords:
+      - "preference manipulation"
+      - "pmpa"
+      - "tool metadata bias"
+      - "llm decision"
+  
+  MCP-16:
+    name: "Rug Pull / Dynamic Behavior Change"
+    category: "Supply Chain Failures"
+    description: "Initially trusted MCP servers later become malicious via updates or triggers."
+    risk_level: "High"
+    stride: ["Tampering", "Repudiation"]
+    keywords:
+      - "rug pull"
+      - "dynamic behavior change"
+      - "silent update"
+      - "tool redefinition"
+  
+  MCP-17:
+    name: "Parasitic Toolchain / Connector Chaining"
+    category: "Data/Control Boundary Failure"
+    description: "Legitimate tools are chained to bypass controls or exfiltrate data."
+    risk_level: "High"
+    stride: ["Tampering", "Denial of Service"]
+    keywords:
+      - "parasitic toolchain"
+      - "connector chaining"
+      - "tool chaining"
+      - "bypass control"
+  
+  MCP-18:
+    name: "Shadow MCP Servers"
+    category: "Supply Chain Failures"
+    description: "Unauthorized MCP servers operate without monitoring, enabling covert abuse."
+    risk_level: "High"
+    stride: ["Spoofing", "Information Disclosure"]
+    keywords:
+      - "shadow mcp server"
+      - "unauthorized server"
+      - "covert abuse"
+  
+  MCP-19:
+    name: "Prompt Injection (Direct)"
+    category: "Data/Control Boundary Failure"
+    description: "Malicious user input overrides system intent and tool constraints."
+    risk_level: "Critical"
+    stride: ["Information Disclosure"]
+    keywords:
+      - "prompt injection"
+      - "direct prompt injection"
+      - "user input override"
+      - "system intent"
+  
+  MCP-20:
+    name: "Prompt Injection (Indirect via Data)"
+    category: "Data/Control Boundary Failure"
+    description: "Hidden prompts in external data trigger unauthorized actions."
+    risk_level: "Critical"
+    stride: ["Information Disclosure"]
+    keywords:
+      - "indirect prompt injection"
+      - "hidden prompt"
+      - "external data"
+      - "retrieved content"
+  
+  MCP-21:
+    name: "Overreliance on LLM Safeguards"
+    category: "Trust Boundary Failures"
+    description: "Developers assume LLM safety filters will prevent misuse, which attackers bypass."
+    risk_level: "Medium"
+    stride: ["Elevation of Privilege"]
+    keywords:
+      - "overreliance"
+      - "llm safeguard"
+      - "safety filter"
+      - "bypass safeguard"
+  
+  MCP-22:
+    name: "Insecure Human-in-the-Loop Bypass"
+    category: "Improper Access Control"
+    description: "Missing or weak consent mechanisms allow unauthorized actions."
+    risk_level: "Medium"
+    stride: ["Elevation of Privilege"]
+    keywords:
+      - "human-in-the-loop"
+      - "hitl"
+      - "consent mechanism"
+      - "approval bypass"
+  
+  MCP-23:
+    name: "Consent / Approval Fatigue"
+    category: "Trust Boundary Failures"
+    description: "Users habituate to frequent prompts and blindly approve risky actions."
+    risk_level: "Low"
+    stride: ["Elevation of Privilege"]
+    keywords:
+      - "approval fatigue"
+      - "consent fatigue"
+      - "blindly approve"
+  
+  MCP-24:
+    name: "Data Exfiltration via Tool Output"
+    category: "Inadequate Data Protection"
+    description: "Tool outputs covertly leak sensitive data."
+    risk_level: "High"
+    stride: ["Information Disclosure"]
+    keywords:
+      - "data exfiltration"
+      - "tool output"
+      - "covert leak"
+      - "sensitive data leak"
+  
+  MCP-25:
+    name: "Privacy Inversion / Data Aggregation Leakage"
+    category: "Inadequate Data Protection"
+    description: "Sensitive data aggregated across tools leaks due to weak isolation."
+    risk_level: "High"
+    stride: ["Information Disclosure"]
+    keywords:
+      - "privacy inversion"
+      - "data aggregation"
+      - "cross-tool data"
+      - "aggregation leakage"
+  
+  MCP-26:
+    name: "Supply Chain Compromise"
+    category: "Supply Chain Failures"
+    description: "Malicious code introduced into MCP packages or dependencies."
+    risk_level: "High"
+    stride: ["Tampering", "Spoofing"]
+    keywords:
+      - "supply chain"
+      - "malicious package"
+      - "dependency"
+      - "compromised package"
+  
+  MCP-27:
+    name: "Missing Integrity Verification"
+    category: "Missing Integrity Controls"
+    description: "No signatures, SBOMs, or attestation to verify MCP server integrity."
+    risk_level: "High"
+    stride: ["Tampering"]
+    keywords:
+      - "integrity verification"
+      - "signature"
+      - "sbom"
+      - "attestation"
+      - "missing signature"
+  
+  MCP-28:
+    name: "Man-in-the-Middle / Transport Tampering"
+    category: "Session & Transport Failures"
+    description: "Weak TLS or auth allows interception or modification of MCP traffic."
+    risk_level: "High"
+    stride: ["Tampering", "Information Disclosure"]
+    keywords:
+      - "man-in-the-middle"
+      - "mitm"
+      - "transport tampering"
+      - "tls"
+      - "interception"
+  
+  MCP-29:
+    name: "Protocol Gaps / Weak Transport Security"
+    category: "Session & Transport Failures"
+    description: "Missing limits, auth, or CSRF protections enable spoofing or DoS."
+    risk_level: "Medium"
+    stride: ["Spoofing", "Tampering", "Denial of Service"]
+    keywords:
+      - "protocol gap"
+      - "weak transport"
+      - "missing auth"
+      - "csrf"
+      - "dos"
+  
+  MCP-30:
+    name: "Insecure stdio Descriptor Handling"
+    category: "Session & Transport Failures"
+    description: "Improper stdio handling enables process or stream hijacking."
+    risk_level: "Medium"
+    stride: ["Tampering"]
+    keywords:
+      - "stdio"
+      - "descriptor handling"
+      - "process hijacking"
+      - "stream hijacking"
+  
+  MCP-31:
+    name: "MCP Endpoint / DNS Rebinding"
+    category: "Network Isolation Failures"
+    description: "DNS rebinding tricks local MCP clients into talking to malicious servers."
+    risk_level: "Medium"
+    stride: ["Spoofing"]
+    keywords:
+      - "dns rebinding"
+      - "mcp endpoint"
+      - "dns rebind"
+      - "localhost bypass"
+  
+  MCP-32:
+    name: "Unrestricted Network Access & Lateral Movement"
+    category: "Network Isolation Failures"
+    description: "Compromised MCP servers pivot to attack internal systems."
+    risk_level: "High"
+    stride: ["Information Disclosure", "Elevation of Privilege"]
+    keywords:
+      - "network access"
+      - "lateral movement"
+      - "internal system"
+      - "pivot"
+  
+  MCP-33:
+    name: "Resource Exhaustion / Denial of Wallet"
+    category: "Resource Management Failures"
+    description: "Excessive LLM/tool calls cause DoS or financial loss."
+    risk_level: "Medium"
+    stride: ["Denial of Service"]
+    keywords:
+      - "resource exhaustion"
+      - "denial of wallet"
+      - "dos"
+      - "excessive call"
+      - "cost"
+  
+  MCP-34:
+    name: "Tool Manifest Reconnaissance"
+    category: "Insufficient Monitoring"
+    description: "Attackers enumerate tool schemas to plan attacks."
+    risk_level: "Low"
+    stride: ["Information Disclosure"]
+    keywords:
+      - "tool manifest"
+      - "reconnaissance"
+      - "enumerate"
+      - "tool schema"
+      - "plan attack"
+  
+  MCP-35:
+    name: "Planning / Agent Logic Drift"
+    category: "Data/Control Boundary Failure"
+    description: "Gradual manipulation shifts agent reasoning toward unsafe decisions."
+    risk_level: "Medium"
+    stride: ["Tampering"]
+    keywords:
+      - "planning drift"
+      - "agent logic drift"
+      - "reasoning manipulation"
+      - "unsafe decision"
+  
+  MCP-36:
+    name: "Multi-Agent Context Hijacking"
+    category: "Data/Control Boundary Failure"
+    description: "One compromised agent poisons shared context across agents."
+    risk_level: "Medium"
+    stride: ["Tampering"]
+    keywords:
+      - "multi-agent"
+      - "context hijacking"
+      - "shared context"
+      - "context poisoning"
+  
+  MCP-37:
+    name: "Sandbox Escape"
+    category: "Input Validation Failures"
+    description: "Code execution tools escape sandbox and access host system."
+    risk_level: "High"
+    stride: ["Elevation of Privilege"]
+    keywords:
+      - "sandbox escape"
+      - "container escape"
+      - "host system"
+      - "breakout"
+  
+  MCP-38:
+    name: "Invisible Agent Activity / No Observability"
+    category: "Insufficient Logging & Auditability"
+    description: "Malicious activity occurs without logs or forensic traceability."
+    risk_level: "Medium"
+    stride: ["Repudiation"]
+    keywords:
+      - "invisible activity"
+      - "no observability"
+      - "no log"
+      - "forensic traceability"
+      - "audit"
+
+# MCP Threat Classification Rules
+# These rules help AI understand MCP threat characteristics
+mcp_threat_classification:
+  workflow_phases:
+    - "Discovery"
+    - "Planning"
+    - "Tool Selection"
+    - "Tool Execution"
+    - "Response Handling"
+    - "Memory Update"
+    - "Cross-Phase"
+  
+  attack_surfaces:
+    - "Authentication & Authorization"
+    - "Tool & Plugin Interface"
+    - "Data & Context"
+    - "Communication & Transport"
+  
+  stride_categories:
+    - "Spoofing"
+    - "Tampering"
+    - "Repudiation"
+    - "Information Disclosure"
+    - "Denial of Service"
+    - "Elevation of Privilege"
+
+# MCP to OWASP Mapping Rules
+# These mappings are used as fallback when AI classification is unavailable
+mcp_to_owasp_mappings:
+  mcp_to_owasp_llm:
+    MCP-01: ["LLM07"]
+    MCP-02: ["LLM06"]
+    MCP-03: ["LLM07"]
+    MCP-04: ["LLM07", "LLM08"]
+    MCP-05: ["LLM07", "LLM08"]
+    MCP-06: ["LLM06"]
+    MCP-07: ["LLM02", "LLM07"]
+    MCP-08: ["LLM06", "LLM07"]
+    MCP-09: ["LLM02", "LLM07"]
+    MCP-10: ["LLM01", "LLM03"]
+    MCP-11: ["LLM01", "LLM03"]
+    MCP-12: ["LLM01", "LLM03"]
+    MCP-13: ["LLM05", "LLM07"]
+    MCP-14: ["LLM05", "LLM07"]
+    MCP-15: ["LLM01"]
+    MCP-16: ["LLM05"]
+    MCP-17: ["LLM07", "LLM08"]
+    MCP-18: ["LLM05"]
+    MCP-19: ["LLM01"]
+    MCP-20: ["LLM01"]
+    MCP-21: ["LLM09"]
+    MCP-22: ["LLM08", "LLM09"]
+    MCP-23: ["LLM09"]
+    MCP-24: ["LLM06"]
+    MCP-25: ["LLM06"]
+    MCP-26: ["LLM05"]
+    MCP-27: ["LLM05"]
+    MCP-28: ["LLM06"]
+    MCP-29: ["LLM04"]
+    MCP-30: ["LLM07"]
+    MCP-31: ["LLM07"]
+    MCP-32: ["LLM06"]
+    MCP-33: ["LLM04"]
+    MCP-34: ["LLM06"]
+    MCP-35: ["LLM08", "LLM09"]
+    MCP-36: ["LLM01"]
+    MCP-37: ["LLM07"]
+    MCP-38: ["LLM08"]
+  
+  mcp_to_owasp_agentic:
+    MCP-01: ["ASI03"]
+    MCP-02: ["ASI03"]
+    MCP-03: ["ASI03"]
+    MCP-04: ["ASI03"]
+    MCP-05: ["ASI05"]
+    MCP-06: ["ASI03"]
+    MCP-07: ["ASI02", "ASI05"]
+    MCP-08: ["ASI02"]
+    MCP-09: ["ASI02"]
+    MCP-10: ["ASI01", "ASI06"]
+    MCP-11: ["ASI06"]
+    MCP-12: ["ASI01", "ASI06"]
+    MCP-13: ["ASI02", "ASI04"]
+    MCP-14: ["ASI02", "ASI04"]
+    MCP-15: ["ASI01", "ASI06"]
+    MCP-16: ["ASI04"]
+    MCP-17: ["ASI01", "ASI02"]
+    MCP-18: ["ASI04"]
+    MCP-19: ["ASI01"]
+    MCP-20: ["ASI01", "ASI06"]
+    MCP-21: ["ASI09"]
+    MCP-22: ["ASI09"]
+    MCP-23: ["ASI09"]
+    MCP-24: ["ASI02"]
+    MCP-25: ["ASI06"]
+    MCP-26: ["ASI04"]
+    MCP-27: ["ASI04"]
+    MCP-28: ["ASI03", "ASI07"]
+    MCP-29: ["ASI07", "ASI08"]
+    MCP-30: ["ASI05"]
+    MCP-31: ["ASI03", "ASI07"]
+    MCP-32: ["ASI02", "ASI03"]
+    MCP-33: ["ASI08"]
+    MCP-34: ["ASI02"]
+    MCP-35: ["ASI01", "ASI08"]
+    MCP-36: ["ASI01", "ASI07"]
+    MCP-37: ["ASI05"]
+    MCP-38: ["ASI10"]
+
+# Keyword Patterns for Classification
+# Used for fallback keyword matching when AI classification is unavailable
+keyword_patterns:
+  owasp_llm_keywords:
+    LLM01: ["prompt injection", "jailbreak", "crafted input", "manipulating llm", "prompt attack", "instruction injection", "system prompt", "ignore previous"]
+    LLM02: ["insecure output", "output handling", "unvalidated output", "code execution", "xss", "sql injection", "command injection", "output sanitization"]
+    LLM03: ["training data", "data poisoning", "poisoned data", "tampered training", "model training", "fine-tuning attack", "backdoor model"]
+    LLM04: ["denial of service", "dos", "resource exhaustion", "model dos", "overload", "excessive tokens", "context flooding"]
+    LLM05: ["supply chain", "third-party", "dependency", "malicious package", "compromised component", "upstream", "plugin vulnerability"]
+    LLM06: ["sensitive information", "data leak", "pii", "credential exposure", "information disclosure", "privacy leak", "confidential data"]
+    LLM07: ["insecure plugin", "plugin design", "tool vulnerability", "insufficient access control", "remote code execution", "rce", "plugin exploit"]
+    LLM08: ["excessive agency", "autonomous action", "unchecked autonomy", "unintended action", "agent authority", "autonomous decision"]
+    LLM09: ["overreliance", "blind trust", "uncritical acceptance", "human oversight", "verification failure", "hallucination trust"]
+    LLM10: ["model theft", "model extraction", "intellectual property", "proprietary model", "model stealing", "weight extraction"]
+  
+  owasp_agentic_keywords:
+    ASI01: ["agent goal hijack", "goal hijacking", "agent goal", "decision path", "objectives", "poisoned emails", "poisoned pdfs", "rag documents", "indirect prompt injection", "agent behavior hijacking", "agent takeover"]
+    ASI02: ["tool misuse", "tool exploitation", "api abuse", "function abuse", "tool manipulation", "unintended tool use", "destructive parameters", "tool chaining", "poisoned tool descriptors", "unvalidated commands", "shell tools"]
+    ASI03: ["identity abuse", "privilege abuse", "credential theft", "impersonation", "privilege escalation", "unauthorized access", "token theft", "session tokens", "delegated access", "ssh keys", "confused deputy"]
+    ASI04: ["agentic supply chain", "supply chain vulnerabilities", "tools", "plugins", "prompt templates", "model files", "external mcp servers", "compromised component", "malicious mcp servers", "poisoned prompt templates", "vulnerable third party agents"]
+    ASI05: ["unexpected code execution", "code execution", "shell commands", "scripts", "migrations", "template evaluation", "deserialization", "generated code", "unsafe deserialization", "code assistants", "generated patches"]
+    ASI06: ["memory poisoning", "context poisoning", "rag poisoning", "memory systems", "embeddings", "rag databases", "summaries", "cross tenant context leakage", "long term drift", "adversarial content"]
+    ASI07: ["insecure inter agent communication", "inter agent communication", "multi agent systems", "mcp channels", "a2a channels", "rpc endpoints", "shared memory", "spoofed agent identities", "replayed delegation", "message tampering"]
+    ASI08: ["cascading failures", "propagate", "planning", "execution", "memory", "downstream systems", "hallucinating planner", "destructive tasks", "poisoned state", "deployment agents", "policy agents"]
+    ASI09: ["human agent trust exploitation", "over trust", "agent recommendations", "agent explanations", "misaligned agents", "coding assistants", "financial copilots", "support agents", "persuasive language", "reveal credentials"]
+    ASI10: ["rogue agents", "compromised agents", "misaligned agents", "self repeat actions", "persist across sessions", "impersonate other agents", "continue exfiltrating", "approval agents", "silently approve", "cost optimizers"]
+  
+  mcp_threat_keywords:
+    MCP-01: ["identity spoofing", "improper authentication", "weak authentication", "absent authentication", "impersonate"]
+    MCP-02: ["credential theft", "token theft", "oauth token", "api key", "secret", "stolen"]
+    MCP-03: ["replay attack", "session hijacking", "intercepted token", "session identifier", "reused"]
+    MCP-04: ["privilege escalation", "confused deputy", "unauthorized elevated permissions", "delegation abuse"]
+    MCP-05: ["excessive permissions", "overexposure", "overly broad permissions", "overprivileged"]
+    MCP-06: ["multitenancy", "isolation failure", "cross-tenant", "tenant isolation"]
+    MCP-07: ["command injection", "rce", "remote code execution", "shell command", "subprocess", "os.system", "exec"]
+    MCP-08: ["path traversal", "directory traversal", "file system exposure", "../", "..\\", "unauthorized file access"]
+    MCP-09: ["ssrf", "xss", "cross-site scripting", "server-side request forgery", "web vulnerability"]
+    MCP-10: ["tool description poisoning", "tool metadata", "hidden instruction", "tool description"]
+    MCP-11: ["full schema poisoning", "fsp", "schema poisoning", "tool schema", "structural poisoning"]
+    MCP-12: ["resource content poisoning", "indirect prompt injection", "poisoned document", "poisoned database"]
+    MCP-13: ["tool shadowing", "name spoofing", "tool name collision", "mimic legitimate"]
+    MCP-14: ["cross-server tool shadowing", "server override", "intercept tool call"]
+    MCP-15: ["preference manipulation", "pmpa", "tool metadata bias", "llm decision"]
+    MCP-16: ["rug pull", "dynamic behavior change", "silent update", "tool redefinition"]
+    MCP-17: ["parasitic toolchain", "connector chaining", "tool chaining", "bypass control"]
+    MCP-18: ["shadow mcp server", "unauthorized server", "covert abuse"]
+    MCP-19: ["prompt injection", "direct prompt injection", "user input override", "system intent"]
+    MCP-20: ["indirect prompt injection", "hidden prompt", "external data", "retrieved content"]
+    MCP-21: ["overreliance", "llm safeguard", "safety filter", "bypass safeguard"]
+    MCP-22: ["human-in-the-loop", "hitl", "consent mechanism", "approval bypass"]
+    MCP-23: ["approval fatigue", "consent fatigue", "blindly approve"]
+    MCP-24: ["data exfiltration", "tool output", "covert leak", "sensitive data leak"]
+    MCP-25: ["privacy inversion", "data aggregation", "cross-tool data", "aggregation leakage"]
+    MCP-26: ["supply chain", "malicious package", "dependency", "compromised package"]
+    MCP-27: ["integrity verification", "signature", "sbom", "attestation", "missing signature"]
+    MCP-28: ["man-in-the-middle", "mitm", "transport tampering", "tls", "interception"]
+    MCP-29: ["protocol gap", "weak transport", "missing auth", "csrf", "dos"]
+    MCP-30: ["stdio", "descriptor handling", "process hijacking", "stream hijacking"]
+    MCP-31: ["dns rebinding", "mcp endpoint", "dns rebind", "localhost bypass"]
+    MCP-32: ["network access", "lateral movement", "internal system", "pivot"]
+    MCP-33: ["resource exhaustion", "denial of wallet", "dos", "excessive call", "cost"]
+    MCP-34: ["tool manifest", "reconnaissance", "enumerate", "tool schema", "plan attack"]
+    MCP-35: ["planning drift", "agent logic drift", "reasoning manipulation", "unsafe decision"]
+    MCP-36: ["multi-agent", "context hijacking", "shared context", "context poisoning"]
+    MCP-37: ["sandbox escape", "container escape", "host system", "breakout"]
+    MCP-38: ["invisible activity", "no observability", "no log", "forensic traceability", "audit"]
+
+# Threat Name Mappings
+threat_name_mappings:
+  owasp_llm_top10_names:
+    LLM01: "Prompt Injection"
+    LLM02: "Insecure Output Handling"
+    LLM03: "Training Data Poisoning"
+    LLM04: "Model Denial of Service"
+    LLM05: "Supply Chain Vulnerabilities"
+    LLM06: "Sensitive Information Disclosure"
+    LLM07: "Insecure Plugin Design"
+    LLM08: "Excessive Agency"
+    LLM09: "Overreliance"
+    LLM10: "Model Theft"
+  
+  owasp_agentic_top10_names:
+    ASI01: "Agent Goal Hijack"
+    ASI02: "Tool Misuse and Exploitation"
+    ASI03: "Identity and Privilege Abuse"
+    ASI04: "Agentic Supply Chain Vulnerabilities"
+    ASI05: "Unexpected Code Execution"
+    ASI06: "Memory and Context Poisoning"
+    ASI07: "Insecure Inter Agent Communication"
+    ASI08: "Cascading Failures"
+    ASI09: "Human Agent Trust Exploitation"
+    ASI10: "Rogue Agents"
+  
+  mcp_threat_names:
+    MCP-01: "Identity Spoofing / Improper Authentication"
+    MCP-02: "Credential Theft / Token Theft"
+    MCP-03: "Replay Attacks / Session Hijacking"
+    MCP-04: "Privilege Escalation & Confused Deputy"
+    MCP-05: "Excessive Permissions / Overexposure"
+    MCP-06: "Improper Multitenancy & Isolation Failure"
+    MCP-07: "Command Injection"
+    MCP-08: "File System Exposure / Path Traversal"
+    MCP-09: "Traditional Web Vulnerabilities (SSRF, XSS)"
+    MCP-10: "Tool Description Poisoning"
+    MCP-11: "Full Schema Poisoning (FSP)"
+    MCP-12: "Resource Content Poisoning"
+    MCP-13: "Tool Shadowing / Name Spoofing"
+    MCP-14: "Cross-Server Tool Shadowing"
+    MCP-15: "Preference Manipulation Attack (PMPA)"
+    MCP-16: "Rug Pull / Dynamic Behavior Change"
+    MCP-17: "Parasitic Toolchain / Connector Chaining"
+    MCP-18: "Shadow MCP Servers"
+    MCP-19: "Prompt Injection (Direct)"
+    MCP-20: "Prompt Injection (Indirect via Data)"
+    MCP-21: "Overreliance on LLM Safeguards"
+    MCP-22: "Insecure Human-in-the-Loop Bypass"
+    MCP-23: "Consent / Approval Fatigue"
+    MCP-24: "Data Exfiltration via Tool Output"
+    MCP-25: "Privacy Inversion / Data Aggregation Leakage"
+    MCP-26: "Supply Chain Compromise"
+    MCP-27: "Missing Integrity Verification"
+    MCP-28: "Man-in-the-Middle / Transport Tampering"
+    MCP-29: "Protocol Gaps / Weak Transport Security"
+    MCP-30: "Insecure stdio Descriptor Handling"
+    MCP-31: "MCP Endpoint / DNS Rebinding"
+    MCP-32: "Unrestricted Network Access & Lateral Movement"
+    MCP-33: "Resource Exhaustion / Denial of Wallet"
+    MCP-34: "Tool Manifest Reconnaissance"
+    MCP-35: "Planning / Agent Logic Drift"
+    MCP-36: "Multi-Agent Context Hijacking"
+    MCP-37: "Sandbox Escape"
+    MCP-38: "Invisible Agent Activity / No Observability"
+
+# AI Classification Instructions
+ai_classification_instructions: |
+  ## Semantic Threat Classification Guide
+  
+  You are an AI threat classifier using semantic understanding to map threats across OWASP frameworks.
+  **DO NOT rely on keyword matching alone** - understand the threat's mechanism, impact, and attack vector.
+  
+  ### Classification Principles
+  
+  1. **Semantic Analysis First**: Study the threat description to understand:
+     - The attack mechanism (how it works)
+     - The vulnerability exploited (what's weak)
+     - The impact/consequence (what harm results)
+     - The affected components (what's targeted)
+  
+  2. **Multi-Label Classification**: A single threat can map to multiple categories:
+     - One threat may span multiple OWASP frameworks
+     - Identify ALL applicable categories, not just the closest match
+     - Consider both direct and indirect relationships
+  
+  3. **Framework Context**: Understand how threats manifest differently:
+     - **Web (A01-A10)**: Traditional application-layer vulnerabilities
+     - **LLM (LLM01-LLM10)**: AI model-specific risks
+     - **Agentic (ASI01-ASI10)**: Multi-agent and autonomous system risks
+     - **MCP (MCP-01 to MCP-38)**: Protocol and agent communication threats
+  
+  ### Step-by-Step Classification Process
+  
+  **Step 1: Identify Core Vulnerability**
+  - What is the fundamental weakness being exploited?
+  - Is it an access control issue? Input validation? Design flaw?
+  - Does it involve data integrity, confidentiality, or availability?
+  
+  **Step 2: Map to Web Framework** (if applicable)
+  - A01: Unauthorized access, privilege escalation, access control bypass
+  - A02: Configuration errors, default credentials, hardening gaps
+  - A03: Compromised dependencies, malicious packages, supply chain
+  - A04: Weak/missing encryption, cryptographic failures
+  - A05: Code/command injection, unvalidated inputs
+  - A06: Design flaws, missing controls, business logic errors
+  - A07: Authentication bypass, credential theft, session issues
+  - A08: Integrity violations, unverified updates, deserialization
+  - A09: Logging gaps, undetected attacks, monitoring failures
+  - A10: Poor error handling, race conditions, exception abuse
+  
+  **Step 3: Map to LLM Framework** (if AI-related)
+  - LLM01: Manipulating model behavior through inputs (prompt injection)
+  - LLM02: Exposing sensitive data through model outputs or access
+  - LLM03: Compromised training data, models, or dependencies
+  - LLM04: Poisoned training data, manipulated knowledge bases
+  - LLM05: Unsafe handling of model-generated outputs
+  - LLM06: Excessive model autonomy or permissions
+  - LLM07: Exposed system prompts, secrets in plugins/tools
+  - LLM08: RAG/embedding vulnerabilities, cross-context leaks
+  - LLM09: Hallucinations, bias, over-trust in model outputs
+  - LLM10: Model resource exhaustion, DoS, cost attacks
+  
+  **Step 4: Map to Agentic Framework** (if agent-related)
+  - ASI01: Altering agent goals or decision-making process
+  - ASI02: Agent misusing tools in unsafe/unintended ways
+  - ASI03: Abusing agent identity, credentials, or privileges
+  - ASI04: Compromised agent supply chain (tools, plugins, MCP)
+  - ASI05: Unsafe code generation or execution by agents
+  - ASI06: Poisoned agent memory, context, or knowledge  
+  - ASI07: Insecure communication between agents
+  - ASI08: Errors cascading across agent systems
+  - ASI09: Exploiting human trust in agent recommendations
+  - ASI10: Compromised or malicious rogue agents
+  
+  **Step 5: Consider MCP-Specific Threats** (if protocol-related)
+  - Refer to MCP-01 through MCP-38 definitions
+  - Consider STRIDE categories (Spoofing, Tampering, Repudiation, Information Disclosure, DoS, Elevation of Privilege)
+  - Map to workflow phases and attack surfaces
+  
+  ### Semantic Indicators vs Keywords
+  
+  **Use semantic indicators** (concepts and patterns):
+  ✅ "Threat involves manipulating agent objectives through external data" → ASI01
+  ✅ "Attack bypasses permission boundaries to access restricted resources" → A01
+  ✅ "Compromised dependency introduces malicious behavior" → A03, LLM03, ASI04
+  
+  **Don't just match keywords**:
+  ❌ Seeing "injection" doesn't automatically mean A05 - could be prompt injection (LLM01)
+  ❌ "Supply chain" could be A03 (web), LLM03 (model), or ASI04 (agentic)
+  ❌ "Privilege escalation" context matters - A01 (access), ASI03 (identity), MCP-04 (confused deputy)
+  
+  ### Cross-Framework Reasoning Examples
+  
+  **Example 1: Prompt Injection Leading to Data Exfiltration**
+  - Primary: LLM01 (prompt injection mechanism)
+  - Secondary: A05 (injection category), ASI01 (if agent goal hijacked)
+  - Tertiary: MCP-19 or MCP-20 (if MCP protocol involved)
+  - Result: Multiple classifications based on where threat manifests
+  
+  **Example 2: Malicious MCP Server**
+  - Primary: ASI04 (agentic supply chain)
+  - Secondary: LLM03 (if LLM consumes it), A03 (supply chain), MCP-18 (shadow server)
+  - Result: Supply chain threat spanning multiple frameworks
+  
+  **Example 3: Weak Authentication on Agent API**
+  - Primary: A07 (authentication failure)
+  - Secondary: ASI03 (identity abuse), MCP-01 (improper authentication)
+  - Result: Authentication issue manifesting across layers
+  
+  ### Output Format
+  
+  Return classifications as JSON:
+  ```json
+  {
+    "web_ids": ["A01", "A05"],
+    "llm_ids": ["LLM01", "LLM06"],
+    "agentic_ids": ["ASI01"],
+    "mcp_ids": ["MCP-19"],
+    "confidence": {
+      "web": 0.95,
+      "llm": 0.90,
+      "agentic": 0.85,
+      "mcp": 0.80
+    },
+    "rationale": "Threat involves prompt injection (LLM01) that hijacks agent goals (ASI01), exploiting injection vulnerability (A05) and bypassing access controls (A01) through crafted user input (MCP-19)"
+  }
+  ```
+  
+  ### Important Reminders
+  
+  - **Keywords are hints, not rules** - Use semantic understanding
+  - **Context is critical** - Same keyword can mean different things
+  - **Be comprehensive** - Include all applicable categories
+  - **Explain reasoning** - Provide clear rationale for classifications
+  - **Consider impact** - What harm does the threat cause?
+  - **Think holistically** - How does threat span frameworks?
+  
+  When uncertain, consider:
+  1. What vulnerability class does this belong to?
+  2. How does it manifest in web, AI, and agent contexts?
+  3. What STRIDE categories apply?
+  4. What are the attack patterns and techniques?
+  5. What components and systems are affected?
+

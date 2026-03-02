@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Threat Platform</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- vis.js for graph visualization -->
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+    <!-- Three.js for 3D visualization (using cdnjs for better reliability) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // OrbitControls inline (r128 compatible)
+        THREE.OrbitControls = function (object, domElement) {
+            this.object = object;
+            this.domElement = domElement;
+            this.enabled = true;
+            this.target = new THREE.Vector3();
+            this.enableDamping = false;
+            this.dampingFactor = 0.05;
+            this.enableZoom = true;
+            this.enableRotate = true;
+            this.enablePan = true;
+            this.maxPolarAngle = Math.PI;
+
+            var scope = this;
+            var rotateStart = new THREE.Vector2();
+            var rotateEnd = new THREE.Vector2();
+            var rotateDelta = new THREE.Vector2();
+            var spherical = new THREE.Spherical();
+            var sphericalDelta = new THREE.Spherical();
+            var scale = 1;
+            var panOffset = new THREE.Vector3();
+            var STATE = { NONE: -1, ROTATE: 0, DOLLY: 1, PAN: 2 };
+            var state = STATE.NONE;
+
+            this.update = function () {
+                var offset = new THREE.Vector3();
+                var position = scope.object.position;
+                offset.copy(position).sub(scope.target);
+                spherical.setFromVector3(offset);
+                if (scope.enableDamping) {
+                    spherical.theta += sphericalDelta.theta * scope.dampingFactor;
+                    spherical.phi += sphericalDelta.phi * scope.dampingFactor;
+                } else {
+                    spherical.theta += sphericalDelta.theta;
+                    spherical.phi += sphericalDelta.phi;
+                }
+                spherical.phi = Math.max(0.01, Math.min(scope.maxPolarAngle - 0.01, spherical.phi));
+                spherical.radius *= scale;
+                scope.target.add(panOffset);
+                offset.setFromSpherical(spherical);
+                position.copy(scope.target).add(offset);
+                scope.object.lookAt(scope.target);
+                sphericalDelta.set(0, 0, 0);
+                panOffset.set(0, 0, 0);
+                scale = 1;
+                return false;
+            };
+
+            this.reset = function () {
+                scope.target.set(0, 0, 0);
+                scope.object.position.set(15, 20, 25);
+                scope.update();
+            };
+
+            function onMouseDown(event) {
+                if (!scope.enabled) return;
+                event.preventDefault();
+                if (event.button === 0) {
+                    state = STATE.ROTATE;
+                    rotateStart.set(event.clientX, event.clientY);
+                } else if (event.button === 2) {
+                    state = STATE.PAN;
+                }
+                document.addEventListener('mousemove', onMouseMove, false);
+                document.addEventListener('mouseup', onMouseUp, false);
+            }
+
+            function onMouseMove(event) {
+                if (!scope.enabled) return;
+                event.preventDefault();
+                if (state === STATE.ROTATE) {
+                    rotateEnd.set(event.clientX, event.clientY);
+                    rotateDelta.subVectors(rotateEnd, rotateStart);
+                    var element = scope.domElement;
+                    sphericalDelta.theta -= 2 * Math.PI * rotateDelta.x / element.clientHeight;
+                    sphericalDelta.phi -= 2 * Math.PI * rotateDelta.y / element.clientHeight;
+                    rotateStart.copy(rotateEnd);
+                    scope.update();
+                }
+            }
+
+            function onMouseUp() {
+                document.removeEventListener('mousemove', onMouseMove, false);
+                document.removeEventListener('mouseup', onMouseUp, false);
+                state = STATE.NONE;
+            }
+
+            function onMouseWheel(event) {
+                if (!scope.enabled || !scope.enableZoom) return;
+                event.preventDefault();
+                if (event.deltaY < 0) {
+                    scale /= 0.95;
+                } else if (event.deltaY > 0) {
+                    scale *= 0.95;
+                }
+                scope.update();
+            }
+
+            scope.domElement.addEventListener('mousedown', onMouseDown, false);
+            scope.domElement.addEventListener('wheel', onMouseWheel, false);
+            scope.domElement.addEventListener('contextmenu', function (e) { e.preventDefault(); }, false);
+            this.update();
+        };
+    </script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <div class="logo-icon">🛡️</div>
+                    <span>MCP Threat Platform</span>
+                </div>
+                <nav class="nav-tabs">
+                    <button class="nav-tab active" data-tab="threat-model-matrix">Threat Model Matrix</button>
+                    <button class="nav-tab" data-tab="risk-planning">🎯 Risk Planning</button>
+                    <button class="nav-tab" data-tab="intel">📡 Intel</button>
+
+                    <button class="nav-tab" data-tab="kg">Knowledge Graph</button>
+                    <button class="nav-tab" data-tab="threat-landscape">3D Landscape</button>
+                </nav>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-secondary" onclick="gatherIntel()">
+                    📡 Gather Intel
+                </button>
+
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- ==================== Canvas Tab ==================== -->
+            <div id="canvas-tab" class="tab-content canvas-tab">
+                <!-- Left Panel: Asset/Threat Palette -->
+                <aside class="left-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Components</div>
+                        <div class="search-box">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" placeholder="Search components..." id="component-search">
+                        </div>
+                    </div>
+                    <div class="panel-sections">
+                        <!-- Assets Section -->
+                        <div class="panel-section">
+                            <div class="section-header">
+                                <span class="section-title">
+                                    🖥️ Assets
+                                    <span class="section-badge" id="asset-count">8</span>
+                                </span>
+                                <span>▼</span>
+                            </div>
+                            <div class="section-items" id="asset-items">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Threat Templates Section -->
+                        <div class="panel-section">
+                            <div class="section-header">
+                                <span class="section-title">
+                                    ⚠️ Threat Templates
+                                    <span class="section-badge" id="template-count">8</span>
+                                </span>
+                                <span>▼</span>
+                            </div>
+                            <div class="section-items" id="template-items">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Generated Threats Section -->
+                        <div class="panel-section">
+                            <div class="section-header">
+                                <span class="section-title">
+                                    🔥 AI Threats
+                                    <span class="section-badge" id="threat-count">0</span>
+                                </span>
+                                <span>▼</span>
+                            </div>
+                            <div class="section-items" id="threat-items">
+                                <div class="card-meta" style="padding: 10px;">No AI-generated threats yet</div>
+                            </div>
+                            <div class="section-footer">
+                                <button class="btn btn-secondary btn-sm" onclick="openCreateThreatModal()"
+                                    style="width: 100%; margin-top: 8px;">
+                                    ➕ Create Threat
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Controls Section -->
+                        <div class="panel-section">
+                            <div class="section-header">
+                                <span class="section-title">
+                                    🛡️ Security Controls
+                                    <span class="section-badge" id="control-count">8</span>
+                                </span>
+                                <span>▼</span>
+                            </div>
+                            <div class="section-items" id="control-items">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Attack Evidence Section -->
+                        <div class="panel-section">
+                            <div class="section-header">
+                                <span class="section-title">
+                                    📋 Attack Evidence
+                                    <span class="section-badge" id="evidence-count">0</span>
+                                </span>
+                                <span>▼</span>
+                            </div>
+                            <div class="section-items" id="evidence-items">
+                                <div class="card-meta" style="padding: 10px;">No attack evidence yet</div>
+                            </div>
+                            <div class="section-footer">
+                                <button class="btn btn-secondary btn-sm" onclick="openCreateEvidenceModal()"
+                                    style="width: 100%; margin-top: 8px;">
+                                    ➕ Create Evidence
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Canvas Area -->
+                <div class="canvas-container">
+                    <div class="canvas-toolbar">
+                        <div class="toolbar-left">
+                            <button class="btn btn-sm btn-primary" onclick="openLoadMCPProjectModal()">📁 Load MCP
+                                Project</button>
+                            <button class="btn btn-sm btn-secondary" onclick="openMCPDSLModal()">📝 Import DSL</button>
+                            <div class="toolbar-divider"></div>
+                            <button class="btn btn-sm btn-secondary" onclick="saveCanvas()">💾 Save</button>
+                            <button class="btn btn-sm btn-secondary" onclick="loadCanvas()">📂 Load</button>
+                            <button class="btn btn-sm btn-secondary" onclick="exportMCPDSL()">📄 Export DSL</button>
+                            <div class="toolbar-divider"></div>
+                            <button class="btn btn-sm btn-primary" onclick="analyzeCanvasThreats()"
+                                id="analyze-threats-btn">
+                                🔍 Analyze Threats
+                            </button>
+                            <div class="toolbar-divider"></div>
+                            <button class="btn btn-sm btn-secondary" id="auto-layout-btn">🔄 Auto Layout</button>
+                            <button class="btn btn-sm btn-secondary" id="clear-canvas-btn">🗑️ Clear</button>
+                        </div>
+                        <div class="toolbar-right">
+                            <div class="zoom-control">
+                                <button class="btn btn-icon btn-sm btn-secondary" onclick="zoomOut()">−</button>
+                                <span class="zoom-value">100%</span>
+                                <button class="btn btn-icon btn-sm btn-secondary" onclick="zoomIn()">+</button>
+                                <button class="btn btn-sm btn-secondary" onclick="resetZoom()">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper">
+                        <div id="threat-canvas">
+                            <!-- Canvas nodes will be added here -->
+                        </div>
+                        <!-- Expand button for right panel when collapsed -->
+                        <button class="right-panel-expand-btn hidden" onclick="toggleRightPanel()"
+                            title="Show Node Details">
+                            ◀
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Details / Threat Analysis -->
+                <aside class="right-panel collapsed">
+                    <div class="detail-header">
+                        <div class="detail-tabs">
+                            <button class="detail-tab active" data-panel-tab="details"
+                                onclick="switchDetailTab('details')">Node Details</button>
+                            <button class="detail-tab" data-panel-tab="threats" onclick="switchDetailTab('threats')">
+                                Threats
+                                <span class="threat-badge" id="canvas-threat-count" style="display: none;">0</span>
+                            </button>
+                        </div>
+                        <button class="btn btn-icon btn-sm btn-secondary toggle-right-panel">✕</button>
+                    </div>
+                    <div class="detail-content">
+                        <!-- Node Details Tab -->
+                        <div id="detail-tab-content" class="detail-tab-content active">
+                            <!-- Empty state will be populated by JS -->
+                        </div>
+                        <!-- Threat Analysis Tab -->
+                        <div id="threat-tab-content" class="detail-tab-content">
+                            <div class="threat-analysis-container">
+                                <div class="threat-analysis-header">
+                                    <h3>Canvas Threat Analysis</h3>
+                                    <p class="analysis-description">Automatically generated threats from Canvas
+                                        architecture</p>
+                                </div>
+                                <div id="canvas-threat-analysis-results" class="threat-analysis-results">
+                                    <div class="empty-state">
+                                        <p>Click "Analyze Threats" to generate threats from Canvas components</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+
+            <!-- ==================== Threat Model Matrix Tab ==================== -->
+            <div id="threat-model-matrix-tab" class="tab-content threat-model-matrix-tab active">
+                <div class="threat-model-matrix-container">
+                    <div class="threat-model-matrix-header">
+                        <div class="header-left">
+                            <h2>🛡️ Threat Model Matrix</h2>
+                            <p class="subtitle">Comprehensive threat modeling framework for MCP security</p>
+                            <p class="subtitle">Click 🔄 Refresh to display all content</p>
+                        </div>
+                        <div class="header-right">
+                            <button class="btn btn-primary" onclick="generateMCPThreatsFromIntel()">
+                                🔄 Generate from Intel
+                            </button>
+                            <button class="btn btn-secondary" onclick="loadMCPThreatMatrix()">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Progress indicator for threat generation -->
+                    <div id="threat-generation-progress" style="display: none;">
+                        <!-- Content will be inserted by JavaScript -->
+                    </div>
+
+                    <div class="threat-model-matrix-stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="tm-total-threats">0</div>
+                            <div class="stat-label">Total Threats</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="tm-intel-mapped">0</div>
+                            <div class="stat-label">Intel Items Mapped</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="tm-stride-distribution">0</div>
+                            <div class="stat-label">STRIDE Categories</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="tm-attack-surfaces">0</div>
+                            <div class="stat-label">Attack Surfaces</div>
+                        </div>
+                    </div>
+
+                    <div class="threat-model-matrix-content">
+                        <!-- MCP Threat ID Matrix (Primary View) -->
+                        <div class="matrix-section">
+                            <div id="mcp-threat-id-matrix" class="mcp-matrix-section">
+                                <!-- Rendered by mcp-threat-matrix.js - MCP-01 to MCP-38 -->
+                            </div>
+                        </div>
+
+                        <!-- OWASP Framework Mapping -->
+                        <div class="matrix-section">
+                            <div id="owasp-mapping-view" class="mcp-matrix-section">
+                                <h3 style="margin-bottom: 16px;">🔗 OWASP Framework Mapping</h3>
+                                <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                                    MCP threats mapped to OWASP Top 10 for LLM Applications and OWASP Agentic Top 10
+                                    frameworks.
+                                </p>
+                                <div id="owasp-mapping-content">
+                                    <!-- Rendered by mcp-threat-matrix.js -->
+                                    <!-- Auto-loaded by JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MCP Workflow Phase View (Removed as requested) -->
+                        <!-- <div class="matrix-section">
+                            <div id="mcp-workflow-phase-view" class="mcp-matrix-section">
+                            </div>
+                        </div> -->
+
+                        <!-- MSB Attack Type Matrix (Removed as requested) -->
+                        <!-- <div class="matrix-section">
+                            <div id="msb-attack-type-matrix" class="mcp-matrix-section">
+                            </div>
+                        </div> -->
+
+                        <!-- MCP-UPD Attack Chains -->
+                        <div class="matrix-section">
+                            <div id="mcp-upd-chains" class="mcp-matrix-section">
+                                <!-- Rendered by mcp-threat-matrix.js -->
+                            </div>
+                        </div>
+
+                        <!-- Legacy Views (for backward compatibility) -->
+                        <div class="matrix-section" style="display: none;">
+                            <h3>STRIDE Threat Distribution</h3>
+                            <div id="stride-distribution-chart" class="chart-container">
+                                <!-- Chart will be rendered here -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== Config Tab ==================== -->
+            <!-- ==================== Risk Planning Tab ==================== -->
+            <div id="risk-planning-tab" class="tab-content risk-planning-tab">
+                <div class="risk-planning-container">
+                    <div class="risk-planning-header">
+                        <div class="risk-planning-title-section">
+                            <h1 class="risk-planning-title">🎯 MCP Risk Planning & Detection Methods</h1>
+                            <p class="risk-planning-subtitle">Plan all risks in MCP and detection methods based on
+                                collected intelligence</p>
+                        </div>
+                        <div class="risk-planning-actions">
+                            <button class="btn btn-primary btn-large" onclick="generateRiskPlanning()">
+                                🔄 Generate Risk Planning
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportRiskPlanning()">
+                                📥 Export
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="risk-planning-summary" class="risk-planning-summary" style="display: none;">
+                        <!-- Summary stats will be populated here -->
+                    </div>
+
+                    <div id="risk-planning-loading" class="risk-planning-loading" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <p>Analyzing threat intelligence and generating risk planning with AI...</p>
+                    </div>
+
+                    <div id="risk-planning-content" class="risk-planning-content">
+                        <div class="risk-planning-empty">
+                            <p>Click "Generate Risk Planning" button to generate MCP risk planning and detection methods
+                                based on collected intelligence</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== Intel Tab ==================== -->
+            <div id="intel-tab" class="tab-content intel-tab">
+                <div class="intel-container">
+                    <div class="intel-header">
+                        <div class="intel-header-left">
+                            <h2 class="intel-title">📡 Intelligence Items</h2>
+                            <p class="intel-subtitle">All collected intelligence from various sources</p>
+                        </div>
+                        <div class="intel-header-right">
+                            <div class="intel-filters" id="intel-filters">
+                                <select id="intel-source-filter" class="intel-filter-select">
+                                    <option value="">All Sources</option>
+                                    <option value="web_search">Web Search</option>
+                                    <option value="cve">CVE/NVD</option>
+                                    <option value="rss">RSS Feeds</option>
+                                    <option value="github">GitHub</option>
+                                </select>
+                                <select id="intel-relevance-filter" class="intel-filter-select">
+                                    <option value="">All Items</option>
+                                    <option value="true">Relevant Only</option>
+                                    <option value="false">Not Relevant</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="loadIntelItems()">🔄 Refresh</button>
+                        </div>
+                    </div>
+
+                    <div class="intel-stats">
+                        <div class="intel-stat">
+                            <div class="intel-stat-value" id="intel-total-count">0</div>
+                            <div class="intel-stat-label">Total Items</div>
+                        </div>
+                        <div class="intel-stat">
+                            <div class="intel-stat-value" id="intel-relevant-count">0</div>
+                            <div class="intel-stat-label">Relevant</div>
+                        </div>
+                        <div class="intel-stat">
+                            <div class="intel-stat-value" id="intel-with-summary-count">0</div>
+                            <div class="intel-stat-label">With Summary</div>
+                        </div>
+                    </div>
+
+                    <!-- List View -->
+                    <div class="intel-list-view" id="intel-list-view">
+                        <div class="intel-list" id="intel-list">
+                            <div class="intel-loading">Loading intelligence items...</div>
+                        </div>
+
+                        <div class="intel-pagination" id="intel-pagination">
+                            <!-- Pagination controls -->
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+
+            <!-- ==================== Knowledge Graph Tab ==================== -->
+            <div id="kg-tab" class="tab-content kg-tab">
+                <div class="kg-container"
+                    style="height: 100%; display: flex; flex-direction: column; overflow: hidden;">
+                    <div class="canvas-toolbar">
+                        <div class="toolbar-left">
+                            <button class="btn btn-sm btn-primary" onclick="generateKGFromIntel()">🔗 Generate from
+                                Intel</button>
+                            <button class="btn btn-sm btn-warning" onclick="generateKGFromIntel(true)">🔄 Regenerate
+                                All</button>
+                            <button class="btn btn-sm btn-secondary" onclick="loadIntelKG()">🔄 Refresh Graph</button>
+                        </div>
+                        <div class="toolbar-right">
+                            <span id="kg-stats" class="kg-stats">Nodes: 0, Edges: 0</span>
+                        </div>
+                    </div>
+
+                    <div id="kg-canvas-container"
+                        style="flex: 1; position: relative; overflow: hidden; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color); margin: 16px;">
+                        <div id="neo4j-warning"
+                            style="display: none; position: absolute; top: 0; left: 0; right: 0; background: rgba(255, 152, 0, 0.9); color: #fff; padding: 8px 16px; font-weight: 500; font-size: 0.875rem; text-align: center; z-index: 2000; backdrop-filter: blur(4px);">
+                            ⚠️ Neo4j connection failed. Start Neo4j container for persistence and advanced features.
+                        </div>
+                        <div id="kg-canvas" style="width: 100%; height: 100%;"></div>
+                        <div id="kg-node-details"
+                            style="position: absolute; top: 16px; right: 16px; width: 350px; max-height: calc(100% - 32px); overflow-y: auto; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-primary);">Node Details</h3>
+                                <button onclick="closeNodeDetails()"
+                                    style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.5rem; line-height: 1;">×</button>
+                            </div>
+                            <div id="kg-node-details-content"></div>
+                        </div>
+                        <div id="kg-empty-state"
+                            style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--text-secondary);">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🕸️</div>
+                            <div style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">No Knowledge Graph
+                                Yet</div>
+                            <div style="font-size: 0.875rem; margin-bottom: 1.5rem;">Generate a knowledge graph from
+                                intelligence items</div>
+                            <button class="btn btn-primary" onclick="generateKGFromIntel()">🔗 Generate from
+                                Intel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== 3D Threat Landscape Tab ==================== -->
+            <div id="threat-landscape-tab" class="tab-content threat-landscape-tab">
+                <div class="threat-landscape-fullscreen">
+                    <!-- Compact Top Bar -->
+                    <div class="landscape-topbar">
+                        <div class="topbar-left">
+                            <h2>3D Threat Landscape</h2>
+                            <span class="topbar-subtitle">MCP-38 threats | Height = Severity | Color = Attack
+                                Surface</span>
+                        </div>
+                        <div class="topbar-center">
+                            <div id="landscape-stats" class="landscape-stats-inline"></div>
+                        </div>
+                        <div class="topbar-right">
+                            <button class="btn btn-sm btn-primary" onclick="initThreatLandscape()">
+                                🏙️ Load
+                            </button>
+                            <button class="btn btn-sm btn-secondary" onclick="ThreatLandscape.resetCamera()">
+                                🔄 Reset
+                            </button>
+                            <button class="btn btn-sm btn-secondary" onclick="refreshLandscapeFromIntel()">
+                                📡 Sync
+                            </button>
+                            <span id="landscape-sync-status" class="sync-status-badge">Not synced</span>
+                        </div>
+                    </div>
+
+                    <!-- Floating Legend -->
+                    <div id="landscape-legend" class="landscape-legend-floating"></div>
+
+                    <!-- Fullscreen 3D Container -->
+                    <div id="landscape-container" class="landscape-container-fullscreen">
+                        <div class="landscape-placeholder">
+                            <div style="font-size: 5rem; margin-bottom: 1.5rem;">🏙️</div>
+                            <h3 style="margin-bottom: 0.5rem;">3D Threat Landscape</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Click "Load" to visualize
+                                MCP-38 threats as a 3D city</p>
+                            <button class="btn btn-primary btn-lg" onclick="initThreatLandscape()">
+                                🏙️ Load 3D View
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Floating Details Panel -->
+                    <div id="landscape-details" class="landscape-details-floating" style="display: none;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== Modals ==================== -->
+
+    <!-- Gather Intel Modal -->
+    <div class="modal-overlay" id="gather-intel-modal">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <span class="modal-title">📡 Gather Intelligence</span>
+                <button class="modal-close" onclick="closeModal('gather-intel-modal')">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                    Start collecting threat intelligence from configured sources. This process runs in the background.
+                </p>
+                <div class="detail-field">
+                    <div class="detail-label">Max Items per Source</div>
+                    <input type="text" inputmode="numeric" class="detail-input" id="intel-max-items"
+                        value="50" placeholder="Enter a number (1-100)">
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">
+                        Enter a number between 1 and 100.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('gather-intel-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="startGatherIntel()">Start Gathering</button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    <!-- Create Threat Modal -->
+    <div class="modal-overlay" id="create-threat-modal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <span class="modal-title">➕ Create Custom Threat</span>
+                <button class="modal-close" onclick="closeModal('create-threat-modal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-field">
+                    <div class="detail-label">Threat Name *</div>
+                    <input type="text" class="detail-input" id="threat-name"
+                        placeholder="e.g., Prompt Injection Attack">
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Description *</div>
+                    <textarea class="detail-input" id="threat-description" rows="4"
+                        placeholder="Describe the threat in detail..."></textarea>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">STRIDE Category *</div>
+                    <select class="detail-input detail-select" id="threat-category">
+                        <option value="spoofing">Spoofing</option>
+                        <option value="tampering">Tampering</option>
+                        <option value="repudiation">Repudiation</option>
+                        <option value="information_disclosure">Information Disclosure</option>
+                        <option value="denial_of_service">Denial of Service</option>
+                        <option value="elevation_of_privilege">Elevation of Privilege</option>
+                    </select>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Risk Level *</div>
+                    <select class="detail-input detail-select" id="threat-risk-level">
+                        <option value="critical">Critical</option>
+                        <option value="high">High</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="low">Low</option>
+                        <option value="info">Info</option>
+                    </select>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Risk Score (0-10)</div>
+                    <input type="number" class="detail-input" id="threat-risk-score" min="0" max="10" step="0.1"
+                        value="7.0">
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Attack Vector</div>
+                    <textarea class="detail-input" id="threat-attack-vector" rows="2"
+                        placeholder="e.g., Tool Response Injection, Context Manipulation"></textarea>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Impact</div>
+                    <textarea class="detail-input" id="threat-impact" rows="2"
+                        placeholder="e.g., Data Integrity, Model Safety"></textarea>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Mitigations</div>
+                    <textarea class="detail-input" id="threat-mitigations" rows="2"
+                        placeholder="Recommended mitigation strategies..."></textarea>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Tags (comma-separated)</div>
+                    <input type="text" class="detail-input" id="threat-tags"
+                        placeholder="e.g., prompt-injection, mcp, critical">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('create-threat-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createCustomThreat()">Create Threat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Evidence Modal -->
+    <div class="modal-overlay" id="create-evidence-modal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <span class="modal-title">➕ Create Attack Evidence</span>
+                <button class="modal-close" onclick="closeModal('create-evidence-modal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-field">
+                    <div class="detail-label">Test Name *</div>
+                    <input type="text" class="detail-input" id="evidence-test-name"
+                        placeholder="e.g., Prompt Injection Test">
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Test Type *</div>
+                    <select class="detail-input detail-select" id="evidence-test-type">
+                        <option value="fuzz_test">Fuzz Test</option>
+                        <option value="injection_test">Injection Test</option>
+                        <option value="tool_misuse">Tool Misuse</option>
+                        <option value="sandbox_bypass">Sandbox Bypass</option>
+                        <option value="permission_test">Permission Test</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Target Asset</div>
+                    <input type="text" class="detail-input" id="evidence-target-asset" placeholder="Asset ID or name">
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Target Tool</div>
+                    <input type="text" class="detail-input" id="evidence-target-tool"
+                        placeholder="Tool name (optional)">
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Attack Success *</div>
+                    <select class="detail-input detail-select" id="evidence-success">
+                        <option value="true">Yes</option>
+                        <option value="false" selected>No</option>
+                    </select>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Attack Success Rate (0-1)</div>
+                    <input type="number" class="detail-input" id="evidence-success-rate" min="0" max="1" step="0.1"
+                        value="0.0">
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Payload Used</div>
+                    <textarea class="detail-input" id="evidence-payload" rows="3"
+                        placeholder="The attack payload that was used..."></textarea>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Response Received</div>
+                    <textarea class="detail-input" id="evidence-response" rows="3"
+                        placeholder="The response from the target..."></textarea>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">AI Analysis</div>
+                    <textarea class="detail-input" id="evidence-analysis" rows="3"
+                        placeholder="Analysis of the attack results..."></textarea>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-label">Vulnerability Confirmed</div>
+                    <select class="detail-input detail-select" id="evidence-vulnerability">
+                        <option value="true">Yes</option>
+                        <option value="false" selected>No</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('create-evidence-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createCustomEvidence()">Create Evidence</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+    <script src="js/threat-model-matrix.js"></script>
+    <script src="js/mcp-threat-matrix.js"></script>
+    <script src="js/risk-planning.js"></script>
+    <script src="js/threat-landscape-3d.js"></script>
+    <script>
+        // Additional inline scripts
+
+        // Initialize 3D Threat Landscape
+        async function initThreatLandscape() {
+            const container = document.getElementById('landscape-container');
+            const placeholder = container ? container.querySelector('.landscape-placeholder') : null;
+            const syncStatus = document.getElementById('landscape-sync-status');
+
+            if (placeholder) {
+                placeholder.innerHTML = '<div class="progress-indicator"><div class="progress-spinner"></div><span>Loading 3D visualization...</span></div>';
+            }
+
+            try {
+                // Check if THREE is defined
+                if (typeof THREE === 'undefined') {
+                    throw new Error('Three.js library not loaded');
+                }
+
+                // Initialize Three.js scene
+                const success = ThreatLandscape.init('landscape-container');
+                if (!success) {
+                    throw new Error('Failed to initialize 3D scene');
+                }
+
+                // Load threat data with Intel sync
+                await ThreatLandscape.loadLandscape();
+
+                // Remove placeholder
+                if (placeholder) {
+                    placeholder.style.display = 'none';
+                }
+
+                // Update sync status
+                if (syncStatus) {
+                    syncStatus.textContent = 'Synced at ' + new Date().toLocaleTimeString('en-US');
+                    syncStatus.style.color = 'var(--success)';
+                }
+
+                console.log('[3D Landscape] Initialized successfully');
+            } catch (error) {
+                console.error('[3D Landscape] Error:', error);
+                if (placeholder) {
+                    placeholder.innerHTML = '<div style="color: #ef4444; text-align: center;"><div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div><p>Failed to load 3D visualization</p><p style="font-size: 0.8rem; color: var(--text-muted);">' + error.message + '</p></div>';
+                }
+            }
+        }
+
+        // Refresh landscape data from Intel
+        async function refreshLandscapeFromIntel() {
+            const syncStatus = document.getElementById('landscape-sync-status');
+            if (syncStatus) {
+                syncStatus.textContent = 'Syncing...';
+                syncStatus.style.color = 'var(--warning)';
+            }
+
+            try {
+                // Re-load landscape data (API fetches latest Intel counts)
+                if (ThreatLandscape.isInitialized && ThreatLandscape.isInitialized()) {
+                    await ThreatLandscape.loadLandscape();
+                    if (syncStatus) {
+                        syncStatus.textContent = 'Synced at ' + new Date().toLocaleTimeString('en-US');
+                        syncStatus.style.color = 'var(--success)';
+                    }
+                    showNotification('success', 'Sync Complete', 'Landscape updated with latest Intel data');
+                } else {
+                    // Initialize if not already
+                    await initThreatLandscape();
+                }
+            } catch (error) {
+                console.error('[3D Landscape] Sync error:', error);
+                if (syncStatus) {
+                    syncStatus.textContent = 'Sync failed';
+                    syncStatus.style.color = 'var(--danger)';
+                }
+                showNotification('error', 'Sync Failed', error.message);
+            }
+        }
+
+        async function runDiscovery() {
+            const configText = document.getElementById('mcp-config-input').value;
+            try {
+                const config = JSON.parse(configText);
+                closeModal('discover-modal');
+                await discoverMCPConfig(config);
+            } catch (e) {
+                showNotification('error', 'Invalid JSON', 'Please enter valid JSON configuration');
+            }
+        }
+
+
+
+
+        async function generateKG() {
+            showNotification('info', 'Generating', 'Creating knowledge graph...');
+            try {
+                const res = await fetch(`${API_BASE}/kg/generate`, { method: 'POST' });
+                if (res.ok) {
+                    await loadKnowledgeGraph();
+                    showNotification('success', 'Generated', 'Knowledge graph created');
+                }
+            } catch (e) {
+                showNotification('error', 'Error', 'Failed to generate knowledge graph');
+            }
+        }
+
+        async function uploadToNeo4j() {
+            showNotification('info', 'Uploading', 'Uploading to Neo4j...');
+            try {
+                const res = await fetch(`${API_BASE}/neo4j/upload`, { method: 'POST' });
+                if (res.ok) {
+                    showNotification('success', 'Uploaded', 'Knowledge graph uploaded to Neo4j');
+                }
+            } catch (e) {
+                showNotification('error', 'Error', 'Failed to upload to Neo4j');
+            }
+        }
+
+        // Clear canvas button
+        document.getElementById('clear-canvas-btn')?.addEventListener('click', () => {
+            if (confirm('Clear all nodes from canvas?')) {
+                const canvas = document.getElementById('threat-canvas');
+                canvas.querySelectorAll('.canvas-node').forEach(n => n.remove());
+                AppState.canvas.nodes.clear();
+                AppState.canvas.connections = [];
+                renderConnections();
+                showNotification('info', 'Cleared', 'Canvas cleared');
+            }
+        });
+
+        // Load MCP Project Modal
+        function openLoadMCPProjectModal() {
+            const modal = document.getElementById('load-mcp-project-modal');
+            if (modal) {
+                modal.classList.add('active');
+            }
+        }
+
+        function closeLoadMCPProjectModal() {
+            const modal = document.getElementById('load-mcp-project-modal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        async function loadMCPProject() {
+            const projectPath = document.getElementById('mcp-project-path').value.trim();
+            if (!projectPath) {
+                showNotification('warning', 'Path Required', 'Please enter MCP project path');
+                return;
+            }
+
+            showNotification('info', 'Loading Project', 'Scanning MCP project and generating architecture...');
+            closeLoadMCPProjectModal();
+
+            try {
+                const res = await fetch(`${API_BASE}/mcp/scan-project`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ project_path: projectPath })
+                });
+
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.message || 'Failed to scan project');
+                }
+
+                const data = await res.json();
+
+                // Clear existing canvas
+                const canvas = document.getElementById('threat-canvas');
+                canvas.querySelectorAll('.canvas-node').forEach(n => n.remove());
+                AppState.canvas.nodes.clear();
+                AppState.canvas.connections = [];
+
+                // Draw architecture components
+                let x = 100, y = 100;
+                const spacingX = 280;
+                const spacingY = 180;
+                let currentX = x;
+                let currentY = y;
+                let row = 0;
+
+                // Draw MCP Servers
+                if (data.servers && data.servers.length > 0) {
+                    data.servers.forEach((server, i) => {
+                        if (i > 0 && i % 3 === 0) {
+                            row++;
+                            currentX = x;
+                            currentY = y + row * spacingY;
+                        }
+
+                        createCanvasNode({
+                            cardType: 'asset',
+                            name: server.name || `MCP Server ${i + 1}`,
+                            type: 'MCP Server',
+                            description: server.description || `MCP Server: ${server.name}`,
+                            tools: server.tools || [],
+                            metadata: server.metadata || {}
+                        }, currentX, currentY);
+
+                        currentX += spacingX;
+                    });
+                }
+
+                // Draw Tools
+                if (data.tools && data.tools.length > 0) {
+                    row++;
+                    currentX = x;
+                    currentY = y + row * spacingY;
+
+                    data.tools.forEach((tool, i) => {
+                        if (i > 0 && i % 3 === 0) {
+                            row++;
+                            currentX = x;
+                            currentY = y + row * spacingY;
+                        }
+
+                        createCanvasNode({
+                            cardType: 'asset',
+                            name: tool.name || `Tool ${i + 1}`,
+                            type: 'Tool',
+                            description: tool.description || `Tool: ${tool.name}`,
+                            metadata: tool.metadata || {}
+                        }, currentX, currentY);
+
+                        currentX += spacingX;
+                    });
+                }
+
+                // Draw auto-generated threats
+                if (data.threats && data.threats.length > 0) {
+                    row++;
+                    currentX = x;
+                    currentY = y + row * spacingY;
+
+                    data.threats.forEach((threat, i) => {
+                        if (i > 0 && i % 2 === 0) {
+                            row++;
+                            currentX = x;
+                            currentY = y + row * spacingY;
+                        }
+
+                        createCanvasNode({
+                            cardType: 'threat',
+                            name: threat.name || threat.title || `Threat ${i + 1}`,
+                            type: 'Threat',
+                            description: threat.description || '',
+                            risk_level: threat.risk_level || 'medium',
+                            mcp_threat_ids: threat.mcp_threat_ids || [],
+                            metadata: threat.metadata || {}
+                        }, currentX, currentY);
+
+                        currentX += spacingX;
+                    });
+                }
+
+                // Render connections if any
+                if (data.connections && data.connections.length > 0) {
+                    setTimeout(() => {
+                        data.connections.forEach(conn => {
+                            const sourceNode = Array.from(AppState.canvas.nodes.values())
+                                .find(n => n.data.name === conn.source || n.id === conn.source);
+                            const targetNode = Array.from(AppState.canvas.nodes.values())
+                                .find(n => n.data.name === conn.target || n.id === conn.target);
+
+                            if (sourceNode && targetNode) {
+                                // Create connection directly
+                                const connection = {
+                                    id: `conn-${Date.now()}-${Math.random()}`,
+                                    source: sourceNode.id,
+                                    sourceConnector: 'right',
+                                    target: targetNode.id,
+                                    targetConnector: 'left'
+                                };
+
+                                // Check if connection already exists
+                                const exists = AppState.canvas.connections.some(c =>
+                                    (c.source === connection.source && c.target === connection.target) ||
+                                    (c.source === connection.target && c.target === connection.source)
+                                );
+
+                                if (!exists) {
+                                    AppState.canvas.connections.push(connection);
+                                }
+                            }
+                        });
+                        renderConnections();
+                    }, 500);
+                }
+
+                showNotification('success', 'Project Loaded',
+                    `Loaded ${data.servers?.length || 0} servers, ${data.tools?.length || 0} tools, ${data.threats?.length || 0} threats`);
+
+            } catch (err) {
+                console.error('Load MCP Project error:', err);
+                showNotification('error', 'Load Failed', err.message || 'Failed to load MCP project');
+            }
+        }
+    </script>
+    <script src="js/canvas-threat-analyzer.js"></script>
+
+    <!-- Load MCP Project Modal -->
+    <div class="modal-overlay" id="load-mcp-project-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Load MCP Project</h3>
+                <button class="modal-close" onclick="closeLoadMCPProjectModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                    Enter the path to your MCP project directory. The system will automatically scan the project,
+                    identify MCP servers, tools, and generate threat cards mapped to MCP-01 to MCP-38.
+                </p>
+                <div class="detail-field">
+                    <label class="detail-label">Project Path</label>
+                    <input type="text" id="mcp-project-path" class="detail-input"
+                        placeholder="/path/to/mcp/project or ./relative/path" style="font-family: monospace;" />
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">
+                        Examples: <code>/Users/username/projects/my-mcp-server</code> or <code>./mcp-server</code>
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeLoadMCPProjectModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="loadMCPProject()">📁 Load & Draw Architecture</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MCP DSL Import Modal -->
+    <div class="modal-overlay" id="mcp-dsl-modal">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title">MCP Architecture DSL</h3>
+                <button class="modal-close" onclick="closeMCPDSLModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 12px; color: var(--text-secondary);">
+                    Define your MCP architecture using DSL syntax. AI will automatically generate threats based on the
+                    components.
+                </p>
+                <div style="display: flex; gap: 16px;">
+                    <div style="flex: 1;">
+                        <label style="font-weight: 500; margin-bottom: 8px; display: block;">DSL Code</label>
+                        <textarea id="mcp-dsl-input"
+                            style="width: 100%; height: 300px; font-family: monospace; font-size: 12px; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-tertiary); resize: none;">mcp-architecture
+
+# Define MCP Servers
+server "file-server" {
+  type: "filesystem"
+  tool: "read_file"
+  tool: "write_file"
+  tool: "list_directory"
+  capability: "file_access"
+}
+
+server "api-gateway" {
+  type: "http"
+  tool: "http_request"
+  tool: "api_call"
+  capability: "network_access"
+}
+
+# Define connections
+connection "file-server" -> "api-gateway"
+
+end</textarea>
+                    </div>
+                    <div
+                        style="flex: 0 0 280px; background: var(--bg-tertiary); padding: 12px; border-radius: 6px; font-size: 12px;">
+                        <h4 style="margin: 0 0 8px 0; font-size: 13px;">DSL Syntax Guide</h4>
+                        <pre style="margin: 0; white-space: pre-wrap; color: var(--text-secondary); line-height: 1.5;">mcp-architecture
+
+# Comments start with #
+
+server "name" {
+  type: "server-type"
+  tool: "tool-name"
+  capability: "cap-name"
+  env: "VAR=value"
+}
+
+# Connection types:
+# -> data flow
+# => control flow
+
+connection "src" -> "dst"
+
+end</pre>
+                    </div>
+                </div>
+                <div style="margin-top: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="dsl-generate-threats" checked>
+                        <span>Auto-generate threats using AI</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeMCPDSLModal()">Cancel</button>
+                <button class="btn btn-secondary" onclick="loadDSLExample()">📋 Load Example</button>
+                <button class="btn btn-primary" onclick="parseMCPDSL()">🎨 Draw Architecture</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // MCP DSL Modal Functions
+        function openMCPDSLModal() {
+            document.getElementById('mcp-dsl-modal').style.display = 'flex';
+        }
+
+        function closeMCPDSLModal() {
+            document.getElementById('mcp-dsl-modal').style.display = 'none';
+        }
+
+        function loadDSLExample() {
+            const example = `mcp-architecture
+
+# Example: AI Agent with Multiple MCP Servers
+
+server "claude-desktop" {
+  type: "client"
+  capability: "model_access"
+}
+
+server "filesystem-server" {
+  type: "filesystem"
+  tool: "read_file"
+  tool: "write_file"
+  tool: "list_directory"
+  capability: "file_access"
+}
+
+server "database-server" {
+  type: "database"
+  tool: "query"
+  tool: "execute"
+  capability: "data_access"
+}
+
+server "web-search" {
+  type: "http"
+  tool: "search"
+  tool: "fetch_url"
+  capability: "network_access"
+}
+
+server "code-executor" {
+  type: "sandbox"
+  tool: "run_python"
+  tool: "run_shell"
+  capability: "code_execution"
+}
+
+# Connections
+connection "claude-desktop" -> "filesystem-server"
+connection "claude-desktop" -> "database-server"
+connection "claude-desktop" -> "web-search"
+connection "claude-desktop" -> "code-executor"
+
+end`;
+            document.getElementById('mcp-dsl-input').value = example;
+        }
+
+        async function parseMCPDSL() {
+            const dslCode = document.getElementById('mcp-dsl-input').value.trim();
+            const generateThreats = document.getElementById('dsl-generate-threats').checked;
+
+            if (!dslCode) {
+                showNotification('warning', 'Empty DSL', 'Please enter MCP architecture DSL code');
+                return;
+            }
+
+            try {
+                // Parse DSL locally
+                const architecture = parseDSLCode(dslCode);
+
+                if (!architecture.servers || architecture.servers.length === 0) {
+                    showNotification('warning', 'No Servers', 'No MCP servers found in DSL code');
+                    return;
+                }
+
+                closeMCPDSLModal();
+                showNotification('info', 'Processing', 'Drawing architecture on canvas...');
+
+                // Clear existing canvas
+                const canvas = document.getElementById('threat-canvas');
+                canvas.querySelectorAll('.canvas-node').forEach(n => n.remove());
+                AppState.canvas.nodes.clear();
+                AppState.canvas.connections = [];
+
+                // Draw servers
+                let x = 100, y = 100;
+                const spacingX = 280;
+                const spacingY = 180;
+                let row = 0;
+                let currentX = x;
+                let currentY = y;
+                const serverNodes = {};
+
+                architecture.servers.forEach((server, i) => {
+                    if (i > 0 && i % 3 === 0) {
+                        row++;
+                        currentX = x;
+                        currentY = y + row * spacingY;
+                    }
+
+                    const nodeId = createCanvasNode({
+                        cardType: 'asset',
+                        name: server.name,
+                        type: server.type || 'MCP Server',
+                        description: `${server.type || 'MCP Server'}: ${server.name}`,
+                        tools: server.tools || [],
+                        capabilities: server.capabilities || [],
+                        metadata: server
+                    }, currentX, currentY);
+
+                    serverNodes[server.name] = nodeId;
+                    currentX += spacingX;
+                });
+
+                // Draw connections
+                setTimeout(() => {
+                    architecture.connections.forEach(conn => {
+                        const sourceId = serverNodes[conn.source];
+                        const targetId = serverNodes[conn.target];
+
+                        if (sourceId && targetId) {
+                            const connection = {
+                                id: `conn-${Date.now()}-${Math.random()}`,
+                                source: sourceId,
+                                sourceConnector: 'right',
+                                target: targetId,
+                                targetConnector: 'left',
+                                type: conn.type || 'data_flow'
+                            };
+
+                            const exists = AppState.canvas.connections.some(c =>
+                                (c.source === connection.source && c.target === connection.target)
+                            );
+
+                            if (!exists) {
+                                AppState.canvas.connections.push(connection);
+                            }
+                        }
+                    });
+                    renderConnections();
+                }, 300);
+
+                // Generate threats using AI if enabled
+                if (generateThreats) {
+                    showNotification('info', 'Generating Threats', 'AI is analyzing architecture for potential threats...');
+
+                    try {
+                        const res = await fetch(`${API_BASE}/mcp/analyze-dsl`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                architecture: architecture,
+                                dsl_code: dslCode
+                            })
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+
+                            if (data.threats && data.threats.length > 0) {
+                                row++;
+                                currentX = x;
+                                currentY = y + row * spacingY;
+
+                                data.threats.forEach((threat, i) => {
+                                    if (i > 0 && i % 2 === 0) {
+                                        row++;
+                                        currentX = x;
+                                        currentY = y + row * spacingY;
+                                    }
+
+                                    createCanvasNode({
+                                        cardType: 'threat',
+                                        name: threat.name || threat.title,
+                                        type: 'Threat',
+                                        description: threat.description || '',
+                                        risk_level: threat.risk_level || 'medium',
+                                        mcp_threat_ids: threat.mcp_threat_ids || [],
+                                        stride_category: threat.stride_category || '',
+                                        metadata: threat
+                                    }, currentX, currentY);
+
+                                    currentX += spacingX;
+                                });
+
+                                showNotification('success', 'Architecture Loaded',
+                                    `Drew ${architecture.servers.length} servers, generated ${data.threats.length} threats`);
+                            } else {
+                                showNotification('success', 'Architecture Loaded',
+                                    `Drew ${architecture.servers.length} servers (no threats generated)`);
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Threat generation error:', err);
+                        showNotification('success', 'Architecture Loaded',
+                            `Drew ${architecture.servers.length} servers (threat generation failed)`);
+                    }
+                } else {
+                    showNotification('success', 'Architecture Loaded',
+                        `Drew ${architecture.servers.length} servers, ${architecture.connections.length} connections`);
+                }
+
+            } catch (err) {
+                console.error('DSL parse error:', err);
+                showNotification('error', 'Parse Error', err.message || 'Failed to parse DSL code');
+            }
+        }
+
+        function parseDSLCode(code) {
+            const servers = [];
+            const connections = [];
+
+            // Remove comments
+            const lines = code.split('\n')
+                .map(line => line.replace(/#.*$/, '').trim())
+                .filter(line => line.length > 0);
+
+            let currentServer = null;
+
+            for (const line of lines) {
+                // Skip header/footer
+                if (line === 'mcp-architecture' || line === 'end') continue;
+
+                // Server definition
+                const serverMatch = line.match(/^server\s+"([^"]+)"\s*\{?/);
+                if (serverMatch) {
+                    if (currentServer) servers.push(currentServer);
+                    currentServer = {
+                        name: serverMatch[1],
+                        type: 'MCP Server',
+                        tools: [],
+                        capabilities: [],
+                        env: {}
+                    };
+                    continue;
+                }
+
+                // End of server block
+                if (line === '}' && currentServer) {
+                    servers.push(currentServer);
+                    currentServer = null;
+                    continue;
+                }
+
+                // Server properties
+                if (currentServer) {
+                    const typeMatch = line.match(/^type:\s*"([^"]+)"/);
+                    if (typeMatch) {
+                        currentServer.type = typeMatch[1];
+                        continue;
+                    }
+
+                    const toolMatch = line.match(/^tool:\s*"([^"]+)"/);
+                    if (toolMatch) {
+                        currentServer.tools.push(toolMatch[1]);
+                        continue;
+                    }
+
+                    const capMatch = line.match(/^capability:\s*"([^"]+)"/);
+                    if (capMatch) {
+                        currentServer.capabilities.push(capMatch[1]);
+                        continue;
+                    }
+
+                    const envMatch = line.match(/^env:\s*"([^"]+)"/);
+                    if (envMatch) {
+                        const [key, value] = envMatch[1].split('=');
+                        if (key) currentServer.env[key] = value || '';
+                        continue;
+                    }
+                }
+
+                // Connection definition
+                const connMatch = line.match(/^connection\s+"([^"]+)"\s*(->>?|=>>?)\s*"([^"]+)"/);
+                if (connMatch) {
+                    connections.push({
+                        source: connMatch[1],
+                        target: connMatch[3],
+                        type: connMatch[2].includes('=') ? 'control_flow' : 'data_flow'
+                    });
+                }
+            }
+
+            // Push last server if exists
+            if (currentServer) servers.push(currentServer);
+
+            return { servers, connections };
+        }
+
+        function exportMCPDSL() {
+            const nodes = Array.from(AppState.canvas.nodes.values());
+            const connections = AppState.canvas.connections || [];
+
+            if (nodes.length === 0) {
+                showNotification('warning', 'Empty Canvas', 'No nodes to export');
+                return;
+            }
+
+            let dsl = 'mcp-architecture\n\n';
+
+            // Export servers/assets
+            const assets = nodes.filter(n => n.data.cardType === 'asset');
+            assets.forEach(node => {
+                dsl += `server "${node.data.name}" {\n`;
+                dsl += `  type: "${node.data.type || 'MCP Server'}"\n`;
+
+                if (node.data.tools && node.data.tools.length > 0) {
+                    node.data.tools.forEach(tool => {
+                        const toolName = typeof tool === 'string' ? tool : tool.name;
+                        dsl += `  tool: "${toolName}"\n`;
+                    });
+                }
+
+                if (node.data.capabilities && node.data.capabilities.length > 0) {
+                    node.data.capabilities.forEach(cap => {
+                        dsl += `  capability: "${cap}"\n`;
+                    });
+                }
+
+                dsl += '}\n\n';
+            });
+
+            // Export connections
+            if (connections.length > 0) {
+                dsl += '# Connections\n';
+                connections.forEach(conn => {
+                    const sourceNode = AppState.canvas.nodes.get(conn.source);
+                    const targetNode = AppState.canvas.nodes.get(conn.target);
+                    if (sourceNode && targetNode) {
+                        const arrow = conn.type === 'control_flow' ? '=>' : '->';
+                        dsl += `connection "${sourceNode.data.name}" ${arrow} "${targetNode.data.name}"\n`;
+                    }
+                });
+            }
+
+            dsl += '\nend';
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(dsl).then(() => {
+                showNotification('success', 'Exported', 'DSL copied to clipboard');
+            }).catch(() => {
+                // Fallback: show in modal
+                document.getElementById('mcp-dsl-input').value = dsl;
+                openMCPDSLModal();
+                showNotification('info', 'Exported', 'DSL code shown in modal');
+            });
+        }
+    </script>
+</body>
+
+</html>
