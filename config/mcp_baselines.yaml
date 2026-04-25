@@ -1,0 +1,34 @@
+baseline_rules:
+  - id: server-timeout
+    title: "Server request timeout configured"
+    target_type: "server_config"
+    field: "timeouts.request_timeout_seconds"
+    operator: "exists"
+    severity: "medium"
+    description: "Set request timeout to prevent resource exhaustion."
+
+  - id: server-rate-limit
+    title: "Rate limit configured"
+    target_type: "server_config"
+    field: "rate_limit.requests_per_minute"
+    operator: "exists"
+    severity: "medium"
+    description: "Enable rate limiting to mitigate DoS."
+
+  - id: tool-sandbox
+    title: "Tool sandbox enabled"
+    target_type: "tool_config"
+    field: "sandbox.enabled"
+    operator: "eq"
+    expected: true
+    severity: "high"
+    description: "Sandbox tools to limit damage from malicious execution."
+
+  - id: tool-allowlist
+    title: "Tool allowlist present"
+    target_type: "tool_config"
+    field: "permissions.allow"
+    operator: "exists"
+    severity: "medium"
+    description: "Define allowed tool operations to reduce privilege abuse."
+
